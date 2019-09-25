@@ -1,13 +1,13 @@
-package us.zoom.demo.caldavclient;
+package yzy.zyuanyuz.caldavclient4j;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class CaldavclientApplication {
+public class Caldavclient4jApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(CaldavclientApplication.class, args);
+        SpringApplication.run(Caldavclient4jApplication.class, args);
     }
 
 }

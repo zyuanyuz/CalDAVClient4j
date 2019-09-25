@@ -1,4 +1,4 @@
-package us.zoom.demo.caldavclient.controller;
+package yzy.zyuanyuz.caldavclient4j.controller;
 
 import net.fortuna.ical4j.model.Calendar;
 import org.apache.commons.httpclient.Credentials;
@@ -33,7 +33,8 @@ public class ClientController {
     calDAVCollection.setHostConfiguration(httpClient.getHostConfiguration());
     calDAVCollection.setCalendarCollectionRoot("/");
     calDAVCollection.setMethodFactory(new CalDAV4JMethodFactory());
-    Calendar cal = calDAVCollection.getCalendar(httpClient, "/root/68ab2a13-ee99-31d8-5baa-4594545fcd36/");
+    Calendar cal =
+        calDAVCollection.getCalendar(httpClient, "/root/68ab2a13-ee99-31d8-5baa-4594545fcd36/");
 
     return cal.toString();
   }
