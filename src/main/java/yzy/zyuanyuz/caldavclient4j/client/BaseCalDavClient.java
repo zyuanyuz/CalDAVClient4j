@@ -1,58 +1,70 @@
 package yzy.zyuanyuz.caldavclient4j.client;
 
-import net.fortuna.ical4j.data.CalendarBuilder;
-import net.fortuna.ical4j.model.Calendar;
-import org.apache.commons.httpclient.Credentials;
-import org.apache.commons.httpclient.HostConfiguration;
-import org.apache.commons.httpclient.UsernamePasswordCredentials;
-import org.apache.commons.httpclient.auth.AuthScope;
-import org.osaf.caldav4j.methods.CalDAV4JMethodFactory;
-import org.osaf.caldav4j.methods.HttpClient;
+import org.apache.http.HttpHost;
+import org.apache.http.HttpRequest;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.ResponseHandler;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.conn.ClientConnectionManager;
+import org.apache.http.params.HttpParams;
+import org.apache.http.protocol.HttpContext;
 
-import java.io.InputStream;
+import java.io.IOException;
 
 /**
  * @author George Yu
  * @since 2019/9/26 13:38
  */
-public class BaseCalDavClient extends HttpClient {
-  protected HostConfiguration hostConfiguration = null;
-
-  public CalDAV4JMethodFactory methodFactory = new CalDAV4JMethodFactory();
-
-  public BaseCalDavClient(
-      String host, int port, String protocol, String username, String password) {
-    HostConfiguration hostConfiguration = new HostConfiguration();
-    hostConfiguration.setHost(host, port, protocol);
-    this.hostConfiguration = hostConfiguration;
-    Credentials credentials = new UsernamePasswordCredentials(username, password);
-    this.getParams().setAuthenticationPreemptive(true);
-    this.getState().setCredentials(AuthScope.ANY, credentials);
-  }
-
-  public BaseCalDavClient(HostConfiguration configuration, String username, String password) {
-    this(
-        configuration.getHost(),
-        configuration.getPort(),
-        configuration.getProtocol().toString(),
-        username,
-        password);
-  }
-
-    protected Calendar getCalendarResource(String resourceName) {
-        Calendar cal;
-
-        InputStream stream = this.getClass().getClassLoader()
-                .getResourceAsStream(resourceName);
-        CalendarBuilder cb = new CalendarBuilder();
-
-        try {
-            cal = cb.build(stream);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-
-        return cal;
+public class BaseCalDavClient implements HttpClient {
+    @Override
+    public HttpParams getParams() {
+        return null;
     }
 
+    @Override
+    public ClientConnectionManager getConnectionManager() {
+        return null;
+    }
+
+    @Override
+    public HttpResponse execute(HttpUriRequest request) throws IOException, ClientProtocolException {
+        return null;
+    }
+
+    @Override
+    public HttpResponse execute(HttpUriRequest request, HttpContext context) throws IOException, ClientProtocolException {
+        return null;
+    }
+
+    @Override
+    public HttpResponse execute(HttpHost target, HttpRequest request) throws IOException, ClientProtocolException {
+        return null;
+    }
+
+    @Override
+    public HttpResponse execute(HttpHost target, HttpRequest request, HttpContext context) throws IOException, ClientProtocolException {
+        return null;
+    }
+
+    @Override
+    public <T> T execute(HttpUriRequest request, ResponseHandler<? extends T> responseHandler) throws IOException, ClientProtocolException {
+        return null;
+    }
+
+    @Override
+    public <T> T execute(HttpUriRequest request, ResponseHandler<? extends T> responseHandler, HttpContext context) throws IOException, ClientProtocolException {
+        return null;
+    }
+
+    @Override
+    public <T> T execute(HttpHost target, HttpRequest request, ResponseHandler<? extends T> responseHandler) throws IOException, ClientProtocolException {
+        return null;
+    }
+
+    @Override
+    public <T> T execute(HttpHost target, HttpRequest request, ResponseHandler<? extends T> responseHandler, HttpContext context) throws IOException, ClientProtocolException {
+        return null;
+    }
 }

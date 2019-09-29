@@ -1,43 +1,62 @@
 package yzy.zyuanyuz.caldavclient4j.client;
 
-import org.apache.commons.httpclient.Credentials;
-import org.apache.commons.httpclient.HostConfiguration;
-import org.apache.commons.httpclient.URI;
-import org.apache.commons.httpclient.UsernamePasswordCredentials;
-import org.apache.commons.httpclient.auth.AuthScope;
-import org.osaf.caldav4j.CalDAVCollection;
-import org.osaf.caldav4j.methods.CalDAV4JMethodFactory;
-import org.osaf.caldav4j.methods.HttpClient;
-import org.springframework.stereotype.Component;
+import com.github.caldav4j.CalDAVCollection;
+import com.github.caldav4j.CalDAVResource;
+import com.github.caldav4j.exceptions.BadStatusException;
+import com.github.caldav4j.exceptions.CalDAV4JException;
+import com.github.caldav4j.methods.CalDAV4JMethodFactory;
+import com.github.caldav4j.methods.HttpGetMethod;
+import com.github.caldav4j.util.CalDAVStatus;
+import com.github.caldav4j.util.MethodUtil;
+import net.fortuna.ical4j.model.Calendar;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
+import org.apache.http.conn.ssl.TrustAllStrategy;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.ssl.SSLContextBuilder;
 
 /**
  * @author George Yu
  * @since 2019/9/27 14:21
  */
-
 public class CalDavAppleManager extends CalDAVCollection {
   private HttpClient httpClient = null;
   private CalDAV4JMethodFactory methodFactory = new CalDAV4JMethodFactory();
 
   public CalDavAppleManager() throws Exception {
 
-    HostConfiguration hostConfiguration = new HostConfiguration();
-    //    hostConfiguration.setHost("caldav.icloud.com", 443, "https");
-    hostConfiguration.setHost("p46-caldav.icloud.com",443,"https");
+    httpClient =
+        HttpClients.custom()
+            .setSSLContext(
+                new SSLContextBuilder().loadTrustMaterial(null, TrustAllStrategy.INSTANCE).build())
+            .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE)
+            //            .setDefaultCredentialsProvider()
 
-    httpClient = new HttpClient();
-    httpClient.setHostConfiguration(hostConfiguration);
-    Credentials credentials =
-        new UsernamePasswordCredentials("zoom2019097@icloud.com", "itkg-ogby-zxti-hpav");
-    httpClient.getParams().setAuthenticationPreemptive(true);
-    httpClient.getState().setCredentials(AuthScope.ANY, credentials);
-
-    this.setHostConfiguration(httpClient.getHostConfiguration());
-    this.setCalendarCollectionRoot("/16884482682/calendars");
-    this.setMethodFactory(new CalDAV4JMethodFactory());
+            .build();
+    //    HttpHost httpHost = new HttpHost("p46-caldav.icloud.com", 80, "http");
   }
 
   public HttpClient getHttpClient() {
     return httpClient;
+  }
+
+  public Calendar getCalendar() throws Exception {
+    Calendar calendar = null;
+    HttpGetMethod getMethod =
+        methodFactory.createGetMethod(
+            "http://p46-caldav.icloud.com:80/published/2/MTY4ODQ0ODI2ODIxNjg4NAMjulTFlQOcdNX48keW2Xoo8ipE263TVr0DdPLG2toH");
+    try {
+      HttpResponse response = httpClient.execute(getDefaultHttpHost(getMethod.getURI()), getMethod);
+
+      if (response.getStatusLine().getStatusCode() != CalDAVStatus.SC_OK) {
+        MethodUtil.StatusToExceptions(getMethod, response);
+        throw new BadStatusException(getMethod, response);
+      }
+      return getMethod.getResponseBodyAsCalendar(response);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    return calendar;
   }
 }

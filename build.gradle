@@ -14,7 +14,13 @@ repositories {
 
 dependencies {
     // https://mvnrepository.com/artifact/com.github.caldav4j/caldav4j
-    compile group: 'com.github.caldav4j', name: 'caldav4j', version: '0.9.2'
+    compile group: 'com.github.caldav4j', name: 'caldav4j', version: '1.0.0-rc.2'
+
+    // https://mvnrepository.com/artifact/org.ehcache/ehcache
+    compile group: 'org.ehcache', name: 'ehcache', version: '3.8.0'
+
+    // https://mvnrepository.com/artifact/javax.cache/cache-api
+    compile group: 'javax.cache', name: 'cache-api', version: '1.1.1'
 
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-web'
