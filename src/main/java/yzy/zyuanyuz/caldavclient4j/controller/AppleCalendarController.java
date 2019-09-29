@@ -24,7 +24,7 @@ public class AppleCalendarController {
     //            calDavAppleManager.getHttpClient(),
     //            "/MTY4ODQ0ODI2ODIxNjg4NAMjulTFlQOcdNX48keW2Xoo8ipE263TVr0DdPLG2toH");
     Calendar cal =
-        calDavAppleManager.getCalendar();
+        calDavAppleManager.getCalendarWithAuth();
     return cal.toString();
   }
 }

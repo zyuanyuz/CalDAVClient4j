@@ -9,10 +9,15 @@ import com.github.caldav4j.methods.HttpGetMethod;
 import com.github.caldav4j.util.CalDAVStatus;
 import com.github.caldav4j.util.MethodUtil;
 import net.fortuna.ical4j.model.Calendar;
+import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.HttpClient;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.TrustAllStrategy;
+import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContextBuilder;
 
@@ -25,7 +30,6 @@ public class CalDavAppleManager extends CalDAVCollection {
   private CalDAV4JMethodFactory methodFactory = new CalDAV4JMethodFactory();
 
   public CalDavAppleManager() throws Exception {
-
     httpClient =
         HttpClients.custom()
             .setSSLContext(
@@ -53,10 +57,44 @@ public class CalDavAppleManager extends CalDAVCollection {
         MethodUtil.StatusToExceptions(getMethod, response);
         throw new BadStatusException(getMethod, response);
       }
-      return getMethod.getResponseBodyAsCalendar(response);
+      calendar = getMethod.getResponseBodyAsCalendar(response);
     } catch (Exception e) {
       e.printStackTrace();
     }
+    System.out.println(calendar);
+    return calendar;
+  }
+
+
+
+  public Calendar getCalendarWithAuth() throws Exception {
+    HttpHost target = new HttpHost("p46-caldav.icloud.com", 443, "https");
+    CredentialsProvider provider = new BasicCredentialsProvider();
+    provider.setCredentials(
+        new AuthScope(target.getHostName(), target.getPort()),
+        new UsernamePasswordCredentials("zoom2019097@icloud.com", "itkg-ogby-zxti-hpav"));
+    httpClient =
+        HttpClients.custom()
+            .setSSLContext(
+                new SSLContextBuilder().loadTrustMaterial(null, TrustAllStrategy.INSTANCE).build())
+            .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE)
+            .setDefaultCredentialsProvider(provider)
+            .build();
+    Calendar calendar = null;
+    HttpGetMethod getMethod =
+        methodFactory.createGetMethod("https://p46-calendarws.icloud.com/ca/collections/home");
+    try {
+      HttpResponse response = httpClient.execute(getDefaultHttpHost(getMethod.getURI()), getMethod);
+
+      if (response.getStatusLine().getStatusCode() != CalDAVStatus.SC_OK) {
+        MethodUtil.StatusToExceptions(getMethod, response);
+        throw new BadStatusException(getMethod, response);
+      }
+      calendar = getMethod.getResponseBodyAsCalendar(response);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    System.out.println(calendar);
     return calendar;
   }
 }
