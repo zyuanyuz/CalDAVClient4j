@@ -17,12 +17,6 @@ public class AppleCalendarController {
   @GetMapping("/cal")
   public String getAppleCal() throws Exception {
     CalDavAppleManager calDavAppleManager = new CalDavAppleManager();
-    //
-    // calDavAppleManager.setCalendarCollectionRoot("http://p46-caldav.icloud.com:80/published/2");
-    //    Calendar cal =
-    //        calDavAppleManager.getCalendar(
-    //            calDavAppleManager.getHttpClient(),
-    //            "/MTY4ODQ0ODI2ODIxNjg4NAMjulTFlQOcdNX48keW2Xoo8ipE263TVr0DdPLG2toH");
     Calendar cal =
         calDavAppleManager.getCalendarWithAuth();
     return cal.toString();
