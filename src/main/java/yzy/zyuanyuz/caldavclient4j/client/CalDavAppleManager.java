@@ -31,6 +31,7 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.util.EntityUtils;
+import org.hibernate.validator.internal.util.privilegedactions.GetMethod;
 
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -136,6 +137,24 @@ public class CalDavAppleManager extends CalDAVCollection {
     return calendar;
   }
 
+  public Calendar getiCloudCalendar() throws Exception {
+    HttpHost target = new HttpHost("p46-caldav.icloud.com", 443, "https");
+    CredentialsProvider provider = new BasicCredentialsProvider();
+    provider.setCredentials(
+        new AuthScope(target.getHostName(), target.getPort()),
+        new UsernamePasswordCredentials("zoom2019097@icloud.com", "itkg-ogby-zxti-hpav"));
+    httpClient =
+        HttpClients.custom()
+            .setSSLContext(
+                new SSLContextBuilder().loadTrustMaterial(null, TrustAllStrategy.INSTANCE).build())
+            .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE)
+            .setDefaultCredentialsProvider(provider)
+            .build();
+    setCalendarCollectionRoot("https://p46-caldav.icloud.com:443/16884482682/calendars/work");
+    Calendar calendar = getCalendar(httpClient,"/EFE46473-85FB-4CD6-BF4B-A383B1F8EBBF.ics");
+    return calendar;
+  }
+
   public void addEvent() throws Exception {
     HttpHost target = new HttpHost("p46-caldav.icloud.com", 443, "https");
     CredentialsProvider provider = new BasicCredentialsProvider();
@@ -151,7 +170,8 @@ public class CalDavAppleManager extends CalDAVCollection {
             .build();
     //    this.calendarCollectionRoot =
     //        "https://p46-caldav.icloud.com:443/16884482682/calendars/work/";
-    this.setCalendarCollectionRoot("https://p46-caldav.icloud.com:443/16884482682/calendars/work/");
+    this.setCalendarCollectionRoot(
+        "https://p46-caldav.icloud.com:443/16884482682/calendars/work");
     // System.out.println(this.getAbsolutePath("EFE46473-85FB-4CD6-BF4B-A383B1F8EBBF.ics"));
     // System.out.println(getCalendarCollectionRoot());
     //    HttpGetMethod getMethod =
@@ -160,7 +180,7 @@ public class CalDavAppleManager extends CalDAVCollection {
     // "https://p46-caldav.icloud.com:443/16884482682/calendars/work/EFE46473-85FB-4CD6-BF4B-A383B1F8EBBF.ics");
     //    HttpResponse response = httpClient.execute(getDefaultHttpHost(getMethod.getURI()),
     // getMethod);
-    Calendar calendar = getCalendar(httpClient, "EFE46473-85FB-4CD6-BF4B-A383B1F8EBBF.ics");
+    // Calendar calendar = getCalendar(httpClient, "EFE46473-85FB-4CD6-BF4B-A383B1F8EBBF.ics");
     DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd-hh-mm-ss");
     Date start = dateFormat.parse("2019-10-22-18-00-00");
     Date end = dateFormat.parse("2019-10-22-20-00-00");
