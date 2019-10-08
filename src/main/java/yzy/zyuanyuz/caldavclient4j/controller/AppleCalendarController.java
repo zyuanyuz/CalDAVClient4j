@@ -17,8 +17,8 @@ public class AppleCalendarController {
   @GetMapping("/cal")
   public String getAppleCal() throws Exception {
     CalDavAppleManager calDavAppleManager = new CalDavAppleManager();
-    Calendar cal =
-        calDavAppleManager.getCalendarWithAuth();
-    return cal.toString();
+    calDavAppleManager.addEvent();
+    return "here";
   }
+
 }
