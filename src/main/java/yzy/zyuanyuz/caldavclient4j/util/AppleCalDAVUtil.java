@@ -8,6 +8,8 @@ import com.github.caldav4j.model.request.CalendarData;
 import com.github.caldav4j.model.request.CalendarQuery;
 import com.github.caldav4j.model.request.Comp;
 import com.github.caldav4j.model.request.CompFilter;
+import net.fortuna.ical4j.model.Calendar;
+import net.fortuna.ical4j.model.Component;
 import net.fortuna.ical4j.model.DateTime;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -56,8 +58,8 @@ public abstract class AppleCalDAVUtil {
       throws Exception {
     String userId = getAppleUserId(httpClient, methodFactory); //16884482682
     String url = CALDAV_ICLOUD_HOST + userId + "/calendars/" + calendarFolder;
-    CompFilter filter = new CompFilter("VCALENDAR");
-    filter.addCompFilter(new CompFilter("VEVENT"));
+    CompFilter filter = new CompFilter(Calendar.VCALENDAR);
+    filter.addCompFilter(new CompFilter(Component.VEVENT));
     SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddhhmmss");
     CalendarData calendarData =
         new CalendarData(
