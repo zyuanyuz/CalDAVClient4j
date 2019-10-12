@@ -6,7 +6,6 @@ import com.github.caldav4j.methods.HttpCalDAVReportMethod;
 import com.github.caldav4j.methods.HttpPropFindMethod;
 import com.github.caldav4j.model.request.CalendarData;
 import com.github.caldav4j.model.request.CalendarQuery;
-import com.github.caldav4j.model.request.Comp;
 import com.github.caldav4j.model.request.CompFilter;
 import net.fortuna.ical4j.model.Calendar;
 import net.fortuna.ical4j.model.Component;
@@ -56,27 +55,27 @@ public abstract class AppleCalDAVUtil {
   public static List<String> getEventUidList(
       String calendarFolder, HttpClient httpClient, CalDAV4JMethodFactory methodFactory)
       throws Exception {
-    String userId = getAppleUserId(httpClient, methodFactory); //16884482682
+    String userId = getAppleUserId(httpClient, methodFactory); // 16884482682
     String url = CALDAV_ICLOUD_HOST + userId + "/calendars/" + calendarFolder;
+
+    DavPropertyNameSet properties = new DavPropertyNameSet();
+    properties.add(DavPropertyName.GETETAG);
+
     CompFilter filter = new CompFilter(Calendar.VCALENDAR);
     filter.addCompFilter(new CompFilter(Component.VEVENT));
-    SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMddhhmmss");
-    CalendarData calendarData =
-        new CalendarData(
-            CalendarData.LIMIT,
-            new DateTime(dateFormat.parse("20190101000000")),
-            new DateTime(dateFormat.parse("20200101000000")),
-            null);
-    CalendarQuery query = new CalendarQuery(filter, calendarData, true, true);
+
+    CalendarQuery query = new CalendarQuery(properties, filter, null, false, false);
     HttpCalDAVReportMethod reportMethod =
         methodFactory.createCalDAVReportMethod(url, query, CalDAVConstants.DEPTH_1);
     HttpResponse response = httpClient.execute(reportMethod);
-    MultiStatus multiStatus = reportMethod.getResponseBodyAsMultiStatus(response);
-    MultiStatusResponse[] multiStatusResponses = multiStatus.getResponses();
-    return Arrays.stream(multiStatusResponses)
-        .skip(1)
-        .map(MultiStatusResponse::getHref)
-        .map(href -> href.substring(href.indexOf(calendarFolder) + calendarFolder.length()))
-        .collect(Collectors.toList());
+    System.out.println(EntityUtils.toString(response.getEntity()));
+    return null;
+    //    MultiStatus multiStatus = reportMethod.getResponseBodyAsMultiStatus(response);
+    //    MultiStatusResponse[] multiStatusResponses = multiStatus.getResponses();
+    //    return Arrays.stream(multiStatusResponses)
+    //        .skip(1)
+    //        .map(MultiStatusResponse::getHref)
+    //        .map(href -> href.substring(href.indexOf(calendarFolder) + calendarFolder.length()))
+    //        .collect(Collectors.toList());
   }
 }

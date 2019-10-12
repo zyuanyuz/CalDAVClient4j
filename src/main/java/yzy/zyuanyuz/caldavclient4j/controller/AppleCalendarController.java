@@ -37,4 +37,11 @@ public class AppleCalendarController {
     CalDavAppleManager calDavappleManager = new CalDavAppleManager();
     return calDavappleManager.getETag();
   }
+
+  @GetMapping("/test")
+  public String getTest() throws Exception{
+    CalDavAppleManager calDavAppleManager = new CalDavAppleManager();
+    calDavAppleManager.testSub();
+    return "asd";
+  }
 }

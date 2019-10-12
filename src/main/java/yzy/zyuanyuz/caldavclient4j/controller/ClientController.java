@@ -73,5 +73,10 @@ public class ClientController {
     return "Update OK";
   }
 
+  @GetMapping("/test")
+  public void test() throws Exception {
+    CalDAVManager calDAVManager = new CalDAVManager();
+    calDAVManager.testSubscribe();
+  }
 
 }

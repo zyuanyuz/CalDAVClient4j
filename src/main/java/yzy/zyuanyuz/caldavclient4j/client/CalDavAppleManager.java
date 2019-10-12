@@ -7,11 +7,10 @@ import com.github.caldav4j.exceptions.BadStatusException;
 import com.github.caldav4j.methods.CalDAV4JMethodFactory;
 import com.github.caldav4j.methods.HttpCalDAVReportMethod;
 import com.github.caldav4j.methods.HttpGetMethod;
+import com.github.caldav4j.methods.HttpPropFindMethod;
 import com.github.caldav4j.model.request.CalendarData;
-import com.github.caldav4j.model.request.CalendarMultiget;
 import com.github.caldav4j.model.request.CalendarQuery;
 import com.github.caldav4j.model.request.CompFilter;
-import com.github.caldav4j.model.response.CalendarDataProperty;
 import com.github.caldav4j.util.CalDAVStatus;
 import com.github.caldav4j.util.MethodUtil;
 import net.fortuna.ical4j.model.Calendar;
@@ -31,9 +30,9 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.util.EntityUtils;
-import org.apache.jackrabbit.webdav.MultiStatusResponse;
 import org.apache.jackrabbit.webdav.property.DavPropertyName;
 import org.apache.jackrabbit.webdav.property.DavPropertyNameSet;
+import org.apache.jackrabbit.webdav.xml.Namespace;
 import yzy.zyuanyuz.caldavclient4j.util.AppleCalDAVUtil;
 
 import java.text.DateFormat;
@@ -120,27 +119,51 @@ public class CalDavAppleManager extends CalDAVCollection {
   }
 
   public String getETag() throws Exception {
-    DavPropertyNameSet properties = new DavPropertyNameSet();
-    properties.add(DavPropertyName.GETETAG);
+    //    DavPropertyNameSet properties = new DavPropertyNameSet();
+    //    properties.add(DavPropertyName.GETETAG);
 
     CompFilter vcalendar = new CompFilter(Calendar.VCALENDAR);
     vcalendar.addCompFilter(new CompFilter(Component.VEVENT));
 
-    CalendarQuery query =
-        new CalendarQuery(properties, vcalendar, new CalendarData(), false, false);
+    CalendarQuery query = new CalendarQuery(vcalendar, new CalendarData(), false, false);
     HttpCalDAVReportMethod method =
-        new HttpCalDAVReportMethod(
+        methodFactory.createCalDAVReportMethod(
             "https://caldav.icloud.com:443/16884482682/calendars/work",
             query,
             CalDAVConstants.DEPTH_1);
     HttpResponse httpResponse = httpClient.execute(method);
-    //    System.out.println(EntityUtils.toString(httpResponse.getEntity()));
-    MultiStatusResponse[] responses =
-        method.getResponseBodyAsMultiStatus(httpResponse).getResponses();
-    for (MultiStatusResponse response : responses) {
-      String eTag = CalendarDataProperty.getEtagfromResponse(response);
-      System.out.println(eTag);
-    }
+    System.out.println(EntityUtils.toString(httpResponse.getEntity()));
+    //    MultiStatusResponse[] responses =
+    //        method.getResponseBodyAsMultiStatus(httpResponse).getResponses();
+    //    for (MultiStatusResponse response : responses) {
+    //      String eTag = CalendarDataProperty.getEtagfromResponse(response);
+    //      System.out.println(eTag);
+    //    }
     return "asdas";
+  }
+
+  public void testSub() throws Exception {
+    DavPropertyNameSet nameSet = new DavPropertyNameSet();
+    nameSet.add(
+        DavPropertyName.create(
+            "xmpp-server", Namespace.getNamespace("http://calendarserver.org/ns/")));
+    nameSet.add(
+        DavPropertyName.create(
+            "pushkey", Namespace.getNamespace("http://calendarserver.org/ns/")));
+    nameSet.add(
+        DavPropertyName.create(
+            "xmpp-heartbeat-uri", Namespace.getNamespace("http://calendarserver.org/ns/")));
+    nameSet.add(DavPropertyName.create("sync-token"));
+    nameSet.add(
+        DavPropertyName.create(
+            "calendar-timezone", Namespace.getNamespace("urn:ietf:params:xml:ns:caldav")));
+    HttpPropFindMethod propFindMethod =
+        methodFactory.createPropFindMethod(
+            "https://caldav.icloud.com:443/16884482682/calendars/work/",
+            nameSet,
+            CalDAVConstants.DEPTH_0);
+    HttpResponse response = httpClient.execute(propFindMethod);
+
+    System.out.println(EntityUtils.toString(response.getEntity()));
   }
 }
