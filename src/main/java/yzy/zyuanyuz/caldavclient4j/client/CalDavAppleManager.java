@@ -44,6 +44,7 @@ import java.util.Date;
  * @since 2019/9/27 14:21
  */
 public class CalDavAppleManager extends CalDAVCollection {
+
   protected HttpClient httpClient;
 
   public CalDavAppleManager() throws Exception {

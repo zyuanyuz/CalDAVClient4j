@@ -1,5 +1,6 @@
 package yzy.zyuanyuz.caldavclient4j.client.icloud;
 
+import com.github.caldav4j.exceptions.CalDAV4JException;
 import com.github.caldav4j.methods.CalDAV4JMethodFactory;
 import com.github.caldav4j.methods.HttpPropFindMethod;
 import net.fortuna.ical4j.model.Calendar;
@@ -29,6 +30,8 @@ import static net.fortuna.ical4j.model.Component.VEVENT;
  * @since 2019/10/15 20:59
  */
 public class ICloudCalDAVManager extends AbstractCalDAVManager {
+
+  private static final String ICLOUD_CALDAV_URI = "https://caldav.icloud.com:443";
 
   private String principal;
 
@@ -70,7 +73,7 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
     DavPropertyNameSet nameSet = new DavPropertyNameSet();
     nameSet.add(DavPropertyName.create(ICloudCalDAVConstants.CURRENT_USER_PRINCIPAL));
     HttpPropFindMethod propFindMethod =
-        methodFactory.createPropFindMethod("https://caldav.icloud.com:443", nameSet, 0);
+        methodFactory.createPropFindMethod(ICLOUD_CALDAV_URI, nameSet, 0);
     HttpResponse response = httpClient.execute(propFindMethod);
     Document doc = propFindMethod.getResponseBodyAsDocument(response.getEntity());
     String href = doc.getElementsByTagName("href").item(1).getFirstChild().getNodeValue();
@@ -83,9 +86,9 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
    * @param uuid
    * @return
    */
-  public String getETag(String uuid) {
-
-    return null;
+  public String getETag(String uuid) throws CalDAV4JException{
+    String pathGetETag = ICLOUD_CALDAV_URI+"/"+this.principal+"/calendars/"+this.calName+"/"+uuid+".ics";
+    return getETag(this.httpClient,pathGetETag);
   }
 
   public void refreshAllEvents() {}
@@ -102,13 +105,51 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
     return null;
   }
 
-  public VEvent gestEvent(String uuid) throws Exception {
+  /**
+   * @param uuid
+   * @return
+   * @throws Exception
+   */
+  public VEvent getEvent(String uuid) throws CalDAV4JException {
     String relativePath = uuid + ".ics";
     Calendar calendar = getCalendar(getHttpClient(), relativePath);
     return (VEvent) calendar.getComponent(VEVENT);
   }
 
-  public void addEvent(VEvent event) {}
+  // TODO VTimezone
+  public void addEvent(VEvent event) throws CalDAV4JException {
+    add(this.httpClient, event, null);
+  }
 
-  public void deleteEvent(String uuid) {}
+  // TODO path need test
+  public void deleteEvent(String uuid) throws CalDAV4JException {
+    String pathToDelete =
+        ICLOUD_CALDAV_URI
+            + "/"
+            + this.principal
+            + "/calendars/"
+            + this.calName
+            + "/"
+            + uuid
+            + ".ics";
+    delete(this.httpClient, pathToDelete);
+  }
+
+  // ↓ getter and setter
+
+  public String getPrincipal() {
+    return principal;
+  }
+
+  public void setPrincipal(String principal) {
+    this.principal = principal;
+  }
+
+  public List<EventEntry> getEventList() {
+    return eventList;
+  }
+
+  public void setEventList(List<EventEntry> eventList) {
+    this.eventList = eventList;
+  }
 }
