@@ -44,6 +44,7 @@ import java.util.Date;
  * @since 2019/9/27 14:21
  */
 public class CalDavAppleManager extends CalDAVCollection {
+
   protected HttpClient httpClient;
 
   public CalDavAppleManager() throws Exception {
@@ -91,7 +92,7 @@ public class CalDavAppleManager extends CalDAVCollection {
     return new Calendar();
   }
 
-  public Calendar getiCloudCalendar() throws Exception {
+  public Calendar getICloudCalendar() throws Exception {
     setCalendarCollectionRoot("https://caldav.icloud.com:443/16884482682/calendars/work");
     Calendar calendar = getCalendar(httpClient, "/EFE46473-85FB-4CD6-BF4B-A383B1F8EBBF.ics");
     return calendar;
