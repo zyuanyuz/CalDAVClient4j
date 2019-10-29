@@ -7,6 +7,7 @@ import com.github.caldav4j.methods.HttpCalDAVReportMethod;
 import com.github.caldav4j.methods.HttpPropFindMethod;
 import com.github.caldav4j.model.request.CalendarQuery;
 import com.github.caldav4j.model.request.CompFilter;
+import com.github.caldav4j.util.CalDAVStatus;
 import com.github.caldav4j.util.ICalendarUtils;
 import net.fortuna.ical4j.model.Calendar;
 import net.fortuna.ical4j.model.Component;
@@ -27,15 +28,15 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.util.EntityUtils;
+import org.apache.jackrabbit.webdav.MultiStatusResponse;
 import org.apache.jackrabbit.webdav.property.DavPropertyName;
 import org.apache.jackrabbit.webdav.property.DavPropertyNameSet;
 import org.w3c.dom.Document;
 import yzy.zyuanyuz.caldavclient4j.client.AbstractCalDAVManager;
+import yzy.zyuanyuz.caldavclient4j.client.util.ICloudCalDAVUtil;
 import yzy.zyuanyuz.caldavclient4j.util.AppleCalDAVUtil;
 
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static net.fortuna.ical4j.model.Component.VEVENT;
@@ -54,6 +55,7 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
 
   public ICloudCalDAVManager(String appleId, String password, String calName) throws Exception {
     this.calName = calName;
+    this.eventsMap = new ConcurrentHashMap<>();
 
     HttpHost target = new HttpHost("caldav.icloud.com", 443, "https");
     CredentialsProvider provider = new BasicCredentialsProvider();
@@ -76,8 +78,6 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
 
     setCalendarCollectionRoot(
         ICloudCalDAVConstants.APPLE_CALDAV_HOST + "/" + this.principal + "/" + this.calName);
-
-    refreshAllEvents(); // init the event list
   }
 
   private String initPrincipal() throws Exception {
@@ -111,8 +111,13 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
     return getETag(this.httpClient, pathGetETag);
   }
 
+  /**
+   * refresh all events ,may dangerous to get recurrence event? TODO
+   *
+   * @throws Exception
+   */
   public void refreshAllEvents() throws Exception {
-    this.eventsMap = new ConcurrentHashMap<>();
+
     String calendarFolder = ICLOUD_CALDAV_URI + this.principal + "/calendars/" + calName;
     DavPropertyNameSet properties = new DavPropertyNameSet();
     properties.add(DavPropertyName.GETETAG);
@@ -123,8 +128,24 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
     CalendarQuery query = new CalendarQuery(properties, filter, null, false, false);
     HttpCalDAVReportMethod reportMethod =
         methodFactory.createCalDAVReportMethod(calendarFolder, query, CalDAVConstants.DEPTH_1);
-    HttpResponse response = httpClient.execute(reportMethod);
-    System.out.println(EntityUtils.toString(response.getEntity()));
+    MultiStatusResponse[] responses =
+        reportMethod.getResponseBodyAsMultiStatus(httpClient.execute(reportMethod)).getResponses();
+    List<String> hrefsToGetEvent = new ArrayList<>();
+    for (int i = 1; i < responses.length; i++) {
+      String href = responses[i].getHref();
+      String uid = ICloudCalDAVUtil.getUidFromHref(href);
+      // ↓↓ class cast need test
+      String etag =
+          (String)
+              responses[i]
+                  .getProperties(CalDAVStatus.SC_OK)
+                  .get(DavPropertyName.GETETAG)
+                  .getValue();
+      if(eventsMap.containsKey(uid)&&!etag.equals(eventsMap.get(uid).getEtag())){
+          hrefsToGetEvent.add(href);
+      }
+    }
+    
   }
 
   public void refreshEvent(String uuid) throws Exception {
@@ -133,7 +154,7 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
     System.out.println(etag);
   }
 
-  public List<VEvent> multiGetEvents() throws Exception {
+  public List<VEvent> multiGetEvents(List<String> hrefs) throws Exception {
 
     return null;
   }
