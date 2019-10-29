@@ -146,22 +146,20 @@ public class CalDavAppleManager extends CalDAVCollection {
     DavPropertyNameSet nameSet = new DavPropertyNameSet();
     nameSet.add(
         DavPropertyName.create(
-            "xmpp-server", Namespace.getNamespace("http://calendarserver.org/ns/")));
+            "notification-URL", Namespace.getNamespace("http://calendarserver.org/ns/")));
     nameSet.add(
-        DavPropertyName.create(
-            "pushkey", Namespace.getNamespace("http://calendarserver.org/ns/")));
+        DavPropertyName.create("pushkey", Namespace.getNamespace("http://calendarserver.org/ns/")));
     nameSet.add(
         DavPropertyName.create(
             "xmpp-heartbeat-uri", Namespace.getNamespace("http://calendarserver.org/ns/")));
+    nameSet.add(DavPropertyName.create("calendar-home-set"));
     nameSet.add(DavPropertyName.create("sync-token"));
     nameSet.add(
         DavPropertyName.create(
             "calendar-timezone", Namespace.getNamespace("urn:ietf:params:xml:ns:caldav")));
     HttpPropFindMethod propFindMethod =
         methodFactory.createPropFindMethod(
-            "https://caldav.icloud.com:443/16884482682/calendars/work/",
-            nameSet,
-            CalDAVConstants.DEPTH_0);
+            "https://caldav.icloud.com:443/16884482682", nameSet, CalDAVConstants.DEPTH_0);
     HttpResponse response = httpClient.execute(propFindMethod);
 
     System.out.println(EntityUtils.toString(response.getEntity()));
