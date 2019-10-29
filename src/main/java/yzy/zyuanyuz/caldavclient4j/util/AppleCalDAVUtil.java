@@ -4,25 +4,18 @@ import com.github.caldav4j.CalDAVConstants;
 import com.github.caldav4j.methods.CalDAV4JMethodFactory;
 import com.github.caldav4j.methods.HttpCalDAVReportMethod;
 import com.github.caldav4j.methods.HttpPropFindMethod;
-import com.github.caldav4j.model.request.CalendarData;
 import com.github.caldav4j.model.request.CalendarQuery;
 import com.github.caldav4j.model.request.CompFilter;
 import net.fortuna.ical4j.model.Calendar;
 import net.fortuna.ical4j.model.Component;
-import net.fortuna.ical4j.model.DateTime;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.util.EntityUtils;
-import org.apache.jackrabbit.webdav.MultiStatus;
-import org.apache.jackrabbit.webdav.MultiStatusResponse;
 import org.apache.jackrabbit.webdav.property.DavPropertyName;
 import org.apache.jackrabbit.webdav.property.DavPropertyNameSet;
 import org.w3c.dom.Document;
 
-import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * @author George Yu
@@ -33,7 +26,7 @@ public abstract class AppleCalDAVUtil {
 
   private static final String CALDAV_ICLOUD_HOST = "https://caldav.icloud.com:443/";
 
-  public static String getAppleUserId(HttpClient httpClient, CalDAV4JMethodFactory methodFactory)
+  public static String getPrincipalId(HttpClient httpClient, CalDAV4JMethodFactory methodFactory)
       throws Exception {
     DavPropertyNameSet nameSet = new DavPropertyNameSet();
     nameSet.add(DavPropertyName.create(CURRENT_USER_PRINCIPAL));
@@ -55,7 +48,7 @@ public abstract class AppleCalDAVUtil {
   public static List<String> getEventUidList(
       String calendarFolder, HttpClient httpClient, CalDAV4JMethodFactory methodFactory)
       throws Exception {
-    String userId = getAppleUserId(httpClient, methodFactory); // 16884482682
+    String userId = getPrincipalId(httpClient, methodFactory); // 16884482682
     String url = CALDAV_ICLOUD_HOST + userId + "/calendars/" + calendarFolder;
 
     DavPropertyNameSet properties = new DavPropertyNameSet();

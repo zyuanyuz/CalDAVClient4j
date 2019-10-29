@@ -39,17 +39,6 @@ public class CalDAVManager extends CalDAVCollection {
     return httpClient;
   }
 
-//  public void addEvent(HttpClient client, String path, VEvent event) {
-//    PostMethod postMethod = methodFactory.createPostMethod();
-//    postMethod.setPath();
-//    postMethod.setRequestBody(event);
-//    try {
-//      client.executeMethod(client.getHostConfiguration(), postMethod);
-//    } catch (IOException e) {
-//      e.printStackTrace();
-//    }
-//  }
-
   public void testSubscribe() throws Exception {
     DavPropertyNameSet nameSet = new DavPropertyNameSet();
     nameSet.add(
