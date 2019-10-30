@@ -8,8 +8,19 @@ import net.fortuna.ical4j.model.component.VEvent;
  */
 public class EventEntry {
   private String uuid;
-  private String Etag;
+  private String etag;
   private VEvent event;
+
+  public EventEntry(String uuid, String etag, VEvent event) {
+    this.uuid = uuid;
+    this.etag = etag;
+    this.event = event;
+  }
+
+  public EventEntry(String etag, VEvent event) {
+    this.etag = etag;
+    this.event = event;
+  }
 
   public String getUuid() {
     return this.uuid;
@@ -20,11 +31,11 @@ public class EventEntry {
   }
 
   public String getEtag() {
-    return Etag;
+    return etag;
   }
 
   public void setEtag(String etag) {
-    Etag = etag;
+    this.etag = etag;
   }
 
   public VEvent getEvent() {
