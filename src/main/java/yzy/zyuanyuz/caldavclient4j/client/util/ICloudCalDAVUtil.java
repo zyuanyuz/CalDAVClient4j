@@ -2,6 +2,8 @@ package yzy.zyuanyuz.caldavclient4j.client.util;
 
 import net.fortuna.ical4j.model.Calendar;
 import net.fortuna.ical4j.model.Component;
+import net.fortuna.ical4j.model.ComponentList;
+import net.fortuna.ical4j.model.component.CalendarComponent;
 import net.fortuna.ical4j.model.component.VEvent;
 
 import java.util.List;
@@ -18,6 +20,6 @@ public abstract class ICloudCalDAVUtil {
     }
 
     public static List<VEvent> getEventsFromCalendars(List<Calendar> calendars){
-        return calendars.stream().map(c->(VEvent)c.getComponent(Component.VEVENT)).collect(Collectors.toList());
+        return calendars.stream().flatMap(c->c.getComponents(Component.VEVENT).stream()).map(e->(VEvent)e).collect(Collectors.toList());
     }
 }

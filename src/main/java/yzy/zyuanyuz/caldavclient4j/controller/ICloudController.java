@@ -19,7 +19,7 @@ public class ICloudController {
   public String getEvent() throws Exception {
     String uuid = "EFE46473-85FB-4CD6-BF4B-A383B1F8EBBF";
     iCloudCalDAVManager.refreshAllEvents();
-    iCloudCalDAVManager.refreshEvent(uuid);
-    return iCloudCalDAVManager.getETag(uuid);
+    //iCloudCalDAVManager.refreshEvent(uuid);
+    return iCloudCalDAVManager.getETagFromServer(uuid);
   }
 }
