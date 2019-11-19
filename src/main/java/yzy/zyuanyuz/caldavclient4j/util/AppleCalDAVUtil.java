@@ -26,7 +26,7 @@ public abstract class AppleCalDAVUtil {
 
   private static final String CALDAV_ICLOUD_HOST = "https://caldav.icloud.com:443/";
 
-  public static String getAppleUserId(HttpClient httpClient, CalDAV4JMethodFactory methodFactory)
+  public static String getPrincipalId(HttpClient httpClient, CalDAV4JMethodFactory methodFactory)
       throws Exception {
     DavPropertyNameSet nameSet = new DavPropertyNameSet();
     nameSet.add(DavPropertyName.create(CURRENT_USER_PRINCIPAL));
@@ -48,7 +48,7 @@ public abstract class AppleCalDAVUtil {
   public static List<String> getEventUidList(
       String calendarFolder, HttpClient httpClient, CalDAV4JMethodFactory methodFactory)
       throws Exception {
-    String userId = getAppleUserId(httpClient, methodFactory); // 16884482682
+    String userId = getPrincipalId(httpClient, methodFactory); // 16884482682
     String url = CALDAV_ICLOUD_HOST + userId + "/calendars/" + calendarFolder;
 
     DavPropertyNameSet properties = new DavPropertyNameSet();
