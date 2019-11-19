@@ -20,9 +20,11 @@ import org.apache.jackrabbit.webdav.property.DavPropertyName;
 import org.apache.jackrabbit.webdav.property.DavPropertyNameSet;
 import org.w3c.dom.Document;
 import yzy.zyuanyuz.caldavclient4j.client.AbstractCalDAVManager;
+import yzy.zyuanyuz.caldavclient4j.util.AppleCalDAVUtil;
 
 import java.util.List;
 
+import static java.util.stream.Collectors.toList;
 import static net.fortuna.ical4j.model.Component.VEVENT;
 
 /**
@@ -86,22 +88,39 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
    * @param uuid
    * @return
    */
-  public String getETag(String uuid) throws CalDAV4JException{
-    String pathGetETag = ICLOUD_CALDAV_URI+"/"+this.principal+"/calendars/"+this.calName+"/"+uuid+".ics";
-    return getETag(this.httpClient,pathGetETag);
+  public String getETag(String uuid) throws CalDAV4JException {
+    String pathGetETag = AppleCalDAVUtil.pathToCalendar(this.principal, this.calName, uuid);
+    return getETag(this.httpClient, pathGetETag);
   }
 
+  /** refresh all events */
   public void refreshAllEvents() {}
 
+  /**
+   * refresh the event with specific uuid
+   *
+   * @param uuid the event uuid
+   */
   public void refreshEvent(String uuid) {}
 
-  public List<VEvent> multiGetEvents() throws Exception {
+  /**
+   *
+   * @param uuidList
+   * @return
+   * @throws Exception
+   */
+  public List<VEvent> multiGetEvents(List<String> uuidList) throws Exception {
+    List<String> urls =
+        uuidList.stream()
+            .map(uuid -> AppleCalDAVUtil.pathToCalendar(this.principal, this.calName, uuid))
+            .collect(toList());
 
-    return null;
+    return multigetCalendarUris(this.httpClient, urls).stream()
+        .map(c -> (VEvent) (c.getComponent(VEVENT)))
+        .collect(toList());
   }
 
   public List<VEvent> getEvents(Date startTime, Date endTime) {
-
     return null;
   }
 
@@ -135,7 +154,7 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
     delete(this.httpClient, pathToDelete);
   }
 
-  // ↓ getter and setter
+  // getter and setter
 
   public String getPrincipal() {
     return principal;
