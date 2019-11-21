@@ -33,7 +33,7 @@ import org.apache.http.util.EntityUtils;
 import org.apache.jackrabbit.webdav.property.DavPropertyName;
 import org.apache.jackrabbit.webdav.property.DavPropertyNameSet;
 import org.apache.jackrabbit.webdav.xml.Namespace;
-import yzy.zyuanyuz.caldavclient4j.util.AppleCalDAVUtil;
+import yzy.zyuanyuz.caldavclient4j.client.util.AppleCalDAVUtil;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;

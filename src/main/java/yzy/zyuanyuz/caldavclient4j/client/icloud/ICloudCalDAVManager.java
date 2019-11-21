@@ -1,26 +1,13 @@
 package yzy.zyuanyuz.caldavclient4j.client.icloud;
 
-import com.github.caldav4j.CalDAVConstants;
 import com.github.caldav4j.exceptions.CalDAV4JException;
 import com.github.caldav4j.methods.CalDAV4JMethodFactory;
-import com.github.caldav4j.methods.HttpCalDAVReportMethod;
 import com.github.caldav4j.methods.HttpPropFindMethod;
-import com.github.caldav4j.model.request.CalendarData;
-import com.github.caldav4j.model.request.CalendarMultiget;
-import com.github.caldav4j.model.request.CalendarQuery;
-import com.github.caldav4j.model.request.CompFilter;
-import com.github.caldav4j.model.response.CalendarDataProperty;
-import com.github.caldav4j.util.CalDAVStatus;
-import com.github.caldav4j.util.GenerateQuery;
 import com.github.caldav4j.util.ICalendarUtils;
 import net.fortuna.ical4j.model.Calendar;
-import net.fortuna.ical4j.model.Component;
 import net.fortuna.ical4j.model.Date;
 import net.fortuna.ical4j.model.Property;
 import net.fortuna.ical4j.model.component.VEvent;
-import net.fortuna.ical4j.model.component.VTimeZone;
-import net.fortuna.ical4j.model.component.VTimeZoneFactory;
-import net.fortuna.ical4j.model.property.Uid;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
@@ -31,26 +18,22 @@ import org.apache.http.conn.ssl.TrustAllStrategy;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContextBuilder;
-import org.apache.http.util.EntityUtils;
-import org.apache.jackrabbit.webdav.MultiStatusResponse;
 import org.apache.jackrabbit.webdav.property.DavPropertyName;
 import org.apache.jackrabbit.webdav.property.DavPropertyNameSet;
-import org.apache.jackrabbit.webdav.property.DavPropertySet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import yzy.zyuanyuz.caldavclient4j.client.AbstractCalDAVManager;
-import yzy.zyuanyuz.caldavclient4j.util.AppleCalDAVUtil;
+import yzy.zyuanyuz.caldavclient4j.client.util.AppleCalDAVUtil;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
 import static net.fortuna.ical4j.model.Component.VEVENT;
-import static org.apache.http.HttpStatus.SC_OK;
 import static yzy.zyuanyuz.caldavclient4j.client.icloud.ICloudCalDAVConstants.CURRENT_USER_PRINCIPAL;
-import static yzy.zyuanyuz.caldavclient4j.client.icloud.ICloudCalDAVConstants.ICLOUD_CALDAV_URI;
 
 /**
  * TODO now this ICloudCalDAVManager is not thread safe
@@ -63,7 +46,7 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
 
   private String principal;
 
-  private Map<String, EventEntry> eventsMap;
+  private Map<String /*event uuid*/, EventEntry> eventsMap;
 
   private String calFolderPath; // TODO init this
 
@@ -112,12 +95,13 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
   }
 
   /**
-   * * get etag by event uuid
+   * * get etag from server by event uuid, TODO not right here to request etag from head request,and
+   * network fail need handle
    *
    * @param uuid
    * @return
    */
-  public String getETag(String uuid) throws CalDAV4JException {
+  public String getETagFromServer(String uuid) throws CalDAV4JException {
     String pathGetETag = AppleCalDAVUtil.pathToCalendar(this.principal, this.calName, uuid);
     return getETag(this.httpClient, pathGetETag);
   }
@@ -130,15 +114,22 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
    *
    * @param uuid the event uuid
    */
-  public void refreshEvent(String uuid) {}
+  public boolean refreshEvent(String uuid) throws CalDAV4JException {
+    String etag = getETagFromServer(uuid);
+    if (null != eventsMap.get(uuid) && eventsMap.get(uuid).getEtag().equals(etag)) {
+      return false;
+    }
+    VEvent event = getEventFromServer(uuid);
+    eventsMap.put(uuid, new EventEntry(uuid, etag, event));
+    return true;
+  }
 
   /**
-   *
    * @param uuidList
    * @return
    * @throws Exception
    */
-  public List<VEvent> multiGetEvents(List<String> uuidList) throws Exception {
+  public List<VEvent> multiGetEventsFromServer(List<String> uuidList) throws Exception {
     List<String> urls =
         uuidList.stream()
             .map(uuid -> AppleCalDAVUtil.pathToCalendar(this.principal, this.calName, uuid))
@@ -158,14 +149,14 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
    * @return
    * @throws Exception
    */
-  public VEvent getEvent(String uuid) throws CalDAV4JException {
+  public VEvent getEventFromServer(String uuid) throws CalDAV4JException {
     String relativePath = uuid + ".ics";
     Calendar calendar = getCalendar(getHttpClient(), relativePath);
     return ICalendarUtils.getFirstEvent(calendar);
   }
 
   // TODO VTimezone how use it?
-  public void addEvent(VEvent event) throws Exception {
+  public void addEventToServer(VEvent event) throws Exception {
     if (ICalendarUtils.getUIDValue(event) == null) {
       // if the event haven't uuid
       event.getProperty(Property.UID).setValue(UUID.randomUUID().toString());
@@ -173,12 +164,12 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
       return;
     }
     add(this.httpClient, event, null);
-    String etag = getETagFromServer(event.getUid().toString());
+    String etag = this.getETagFromServer(event.getUid().toString());
     eventsMap.put(event.getUid().toString(), new EventEntry(etag, event));
   }
 
   // TODO path need test
-  public void deleteEvent(String uuid) throws CalDAV4JException {
+  public void deleteEventFromServer(String uuid) throws CalDAV4JException {
     String pathToDelete = this.calFolderPath + uuid + ".ics";
     delete(this.httpClient, pathToDelete);
   }

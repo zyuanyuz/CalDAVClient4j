@@ -1,4 +1,4 @@
-package yzy.zyuanyuz.caldavclient4j.util;
+package yzy.zyuanyuz.caldavclient4j.client.util;
 
 import com.github.caldav4j.CalDAVConstants;
 import com.github.caldav4j.methods.CalDAV4JMethodFactory;
@@ -8,6 +8,7 @@ import com.github.caldav4j.model.request.CalendarQuery;
 import com.github.caldav4j.model.request.CompFilter;
 import net.fortuna.ical4j.model.Calendar;
 import net.fortuna.ical4j.model.Component;
+import net.fortuna.ical4j.model.component.VEvent;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.util.EntityUtils;
@@ -16,12 +17,16 @@ import org.apache.jackrabbit.webdav.property.DavPropertyNameSet;
 import org.w3c.dom.Document;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author George Yu
  * @since 2019/10/9 10:43
  */
-public abstract class AppleCalDAVUtil {
+public class AppleCalDAVUtil {
+
+  private AppleCalDAVUtil(){}
+
   private static final String CURRENT_USER_PRINCIPAL = "current-user-principal";
 
   private static final String CALDAV_ICLOUD_HOST = "https://caldav.icloud.com:443/";
@@ -74,5 +79,13 @@ public abstract class AppleCalDAVUtil {
 
   public static String pathToCalendar(String principal, String calFolder, String uuid) {
     return CALDAV_ICLOUD_HOST + "/" + principal + "/calendars/" + calFolder + "/" + uuid + ".ics";
+  }
+
+  public static String getUidFromHref(String href){
+    return href.substring(href.lastIndexOf("/")+1,href.indexOf(".ics"));
+  }
+
+  public static List<VEvent> getEventsFromCalendars(List<Calendar> calendars){
+    return calendars.stream().flatMap(c->c.getComponents(Component.VEVENT).stream()).map(e->(VEvent)e).collect(Collectors.toList());
   }
 }
