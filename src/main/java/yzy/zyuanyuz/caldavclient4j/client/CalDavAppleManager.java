@@ -33,7 +33,7 @@ import org.apache.http.util.EntityUtils;
 import org.apache.jackrabbit.webdav.property.DavPropertyName;
 import org.apache.jackrabbit.webdav.property.DavPropertyNameSet;
 import org.apache.jackrabbit.webdav.xml.Namespace;
-import yzy.zyuanyuz.caldavclient4j.client.util.AppleCalDAVUtil;
+import yzy.zyuanyuz.caldavclient4j.client.util.ICloudCalDAVUtil;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -88,7 +88,7 @@ public class CalDavAppleManager extends CalDAVCollection {
   }
 
   public Calendar getReportWithAuth() throws Exception {
-    AppleCalDAVUtil.getEventUidList("work", httpClient, methodFactory);
+    ICloudCalDAVUtil.getEventUidList("work", httpClient, methodFactory);
     return new Calendar();
   }
 

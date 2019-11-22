@@ -23,20 +23,20 @@ import java.util.stream.Collectors;
  * @author George Yu
  * @since 2019/10/9 10:43
  */
-public class AppleCalDAVUtil {
+public class ICloudCalDAVUtil {
 
-  private AppleCalDAVUtil(){}
+  private ICloudCalDAVUtil(){}
 
-  private static final String CURRENT_USER_PRINCIPAL = "current-user-principal";
+  private static final String CURRENT_USER_PRINCIPAL_STR = "current-user-principal";
 
-  private static final String CALDAV_ICLOUD_HOST = "https://caldav.icloud.com:443/";
+  private static final String ICLOUD_CALDAV_HOST = "https://caldav.icloud.com:443/";
 
   public static String getPrincipalId(HttpClient httpClient, CalDAV4JMethodFactory methodFactory)
       throws Exception {
     DavPropertyNameSet nameSet = new DavPropertyNameSet();
-    nameSet.add(DavPropertyName.create(CURRENT_USER_PRINCIPAL));
+    nameSet.add(DavPropertyName.create(CURRENT_USER_PRINCIPAL_STR));
     HttpPropFindMethod propFindMethod =
-        methodFactory.createPropFindMethod("https://caldav.icloud.com:443", nameSet, 0);
+        methodFactory.createPropFindMethod(ICLOUD_CALDAV_HOST, nameSet, 0);
     HttpResponse response = httpClient.execute(propFindMethod);
     Document doc = propFindMethod.getResponseBodyAsDocument(response.getEntity());
     String href = doc.getElementsByTagName("href").item(1).getFirstChild().getNodeValue();
@@ -53,8 +53,8 @@ public class AppleCalDAVUtil {
   public static List<String> getEventUidList(
       String calendarFolder, HttpClient httpClient, CalDAV4JMethodFactory methodFactory)
       throws Exception {
-    String userId = getPrincipalId(httpClient, methodFactory); // 16884482682
-    String url = CALDAV_ICLOUD_HOST + userId + "/calendars/" + calendarFolder;
+    String userId = getPrincipalId(httpClient, methodFactory);  // e.g. 16884482682
+    String url = ICLOUD_CALDAV_HOST + userId + "/calendars/" + calendarFolder;
 
     DavPropertyNameSet properties = new DavPropertyNameSet();
     properties.add(DavPropertyName.GETETAG);
@@ -78,7 +78,7 @@ public class AppleCalDAVUtil {
   }
 
   public static String pathToCalendar(String principal, String calFolder, String uuid) {
-    return CALDAV_ICLOUD_HOST + "/" + principal + "/calendars/" + calFolder + "/" + uuid + ".ics";
+    return ICLOUD_CALDAV_HOST + "/" + principal + "/calendars/" + calFolder + "/" + uuid + ".ics";
   }
 
   public static String getUidFromHref(String href){
