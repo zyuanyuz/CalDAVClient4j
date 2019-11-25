@@ -14,18 +14,16 @@ repositories {
 }
 
 dependencies {
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-'
 
     compileOnly 'org.projectlombok:lombok:1.18.10'
     annotationProcessor 'org.projectlombok:lombok:1.18.10'
 
     // https://mvnrepository.com/artifact/com.github.caldav4j/caldav4j
     compile group: 'com.github.caldav4j', name: 'caldav4j', version: '1.0.0-rc.2'
-
     // https://mvnrepository.com/artifact/javax.cache/cache-api
     compile group: 'javax.cache', name: 'cache-api', version: '1.1.1'
 
-    compile 'us.zoom.websrv.calendar:websrv-calendar-service-api:0.0.2-SNAPSHOT'
-    compile 'us.zoom.websrv.commons:websrv-commons-cache:0.0.6-SNAPSHOT'
-    implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
+    // https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-autoconfigure
+    compile group: 'org.springframework.boot', name: 'spring-boot-autoconfigure', version: '2.1.7.RELEASE'
 }
