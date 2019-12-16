@@ -8,13 +8,21 @@ import com.github.caldav4j.model.request.CalendarQuery;
 import com.github.caldav4j.model.request.CompFilter;
 import net.fortuna.ical4j.model.Calendar;
 import net.fortuna.ical4j.model.Component;
+import net.fortuna.ical4j.model.Property;
+import net.fortuna.ical4j.model.PropertyList;
 import net.fortuna.ical4j.model.component.VEvent;
+import net.fortuna.ical4j.model.property.Attendee;
+import net.fortuna.ical4j.model.property.Organizer;
+import net.fortuna.ical4j.model.property.Uid;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.util.EntityUtils;
 import org.apache.jackrabbit.webdav.property.DavPropertyName;
 import org.apache.jackrabbit.webdav.property.DavPropertyNameSet;
 import org.w3c.dom.Document;
+import us.zoom.web.caldavclient.client.icloud.EventEntry;
+import us.zoom.web.calendar.api.view.CalendarEventAttendee;
+import us.zoom.web.calendar.core.domain.EventItem;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -25,7 +33,7 @@ import java.util.stream.Collectors;
  */
 public class ICloudCalDAVUtil {
 
-  private ICloudCalDAVUtil(){}
+  private ICloudCalDAVUtil() {}
 
   private static final String CURRENT_USER_PRINCIPAL_STR = "current-user-principal";
 
@@ -53,7 +61,7 @@ public class ICloudCalDAVUtil {
   public static List<String> getEventUidList(
       String calendarFolder, HttpClient httpClient, CalDAV4JMethodFactory methodFactory)
       throws Exception {
-    String userId = getPrincipalId(httpClient, methodFactory);  // e.g. 16884482682
+    String userId = getPrincipalId(httpClient, methodFactory); // e.g. 16884482682
     String url = ICLOUD_CALDAV_HOST + userId + "/calendars/" + calendarFolder;
 
     DavPropertyNameSet properties = new DavPropertyNameSet();
@@ -81,11 +89,34 @@ public class ICloudCalDAVUtil {
     return ICLOUD_CALDAV_HOST + "/" + principal + "/calendars/" + calFolder + "/" + uuid + ".ics";
   }
 
-  public static String getUidFromHref(String href){
-    return href.substring(href.lastIndexOf("/")+1,href.indexOf(".ics"));
+  public static String getUidFromHref(String href) {
+    return href.substring(href.lastIndexOf("/") + 1, href.indexOf(".ics"));
   }
 
-  public static List<VEvent> getEventsFromCalendars(List<Calendar> calendars){
-    return calendars.stream().flatMap(c->c.getComponents(Component.VEVENT).stream()).map(e->(VEvent)e).collect(Collectors.toList());
+  public static List<VEvent> getEventsFromCalendars(List<Calendar> calendars) {
+    return calendars.stream()
+        .flatMap(c -> c.getComponents(Component.VEVENT).stream())
+        .map(e -> (VEvent) e)
+        .collect(Collectors.toList());
+  }
+
+  public static EventItem turnToEventItem(EventEntry eventEntry) {
+    EventItem eventItem = new EventItem();
+    eventItem.setEventId(eventEntry.getUuid());
+    eventItem.setEtag(eventEntry.getEtag());
+    VEvent event = eventEntry.getEvent();
+    PropertyList<Attendee> attendees = event.getProperties(Property.ATTENDEE);
+
+    return eventItem;
+  }
+
+  public static EventEntry turnToEventEntry(EventItem eventItem) {
+    VEvent vevent = new VEvent();
+    vevent.getProperties().add(new Uid(eventItem.getEventId()));
+    vevent.getProperties().add(new Organizer());
+    for (CalendarEventAttendee attendee : eventItem.getAttendees()) {
+
+    }
+    return new EventEntry(eventItem.getEventId(), eventItem.getEtag(), vevent);
   }
 }

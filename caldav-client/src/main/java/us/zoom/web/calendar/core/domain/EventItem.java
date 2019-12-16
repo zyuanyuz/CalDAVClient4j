@@ -5,12 +5,16 @@ package us.zoom.web.calendar.core.domain;
 // import org.springframework.data.mongodb.core.mapping.Document;
 // import us.zoom.web.calendar.api.enums.CalendarEventState;
 // import us.zoom.web.calendar.api.enums.CalendarProviderType;
-// import us.zoom.web.calendar.api.view.CalendarEventAttendee;
+ import us.zoom.web.calendar.api.view.CalendarEventAttendee;
 // import us.zoom.web.calendar.api.view.ConferenceInfo;
 // import us.zoom.web.calendar.api.view.EventReminderInfo;
 // import us.zoom.web.commons.cache.core.intercepter.key.Versionable;
 
-import java.time.LocalDateTime;
+import lombok.Data;
+ import us.zoom.web.calendar.api.view.ConferenceInfo;
+ import us.zoom.web.calendar.api.view.EventReminderInfo;
+
+ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -19,7 +23,7 @@ import java.util.Map;
  * @see us.zoom.web.calendar.api.view.CalendarEventInfo
  * @since : 2019-05-20 18:05
  */
-// @Data
+@Data
 // @Document(collection = "zm_cal_event_item")
 public class EventItem {
 
@@ -72,11 +76,11 @@ public class EventItem {
 
     private String description;
 
-    //private List<CalendarEventAttendee> attendees;
+    private List<CalendarEventAttendee> attendees;
 
-    //private EventReminderInfo reminder;
+    private EventReminderInfo reminder;
 
-    //private ConferenceInfo conferenceInfo;
+    private ConferenceInfo conferenceInfo;
 
     /**
      * @see CalendarProviderType
