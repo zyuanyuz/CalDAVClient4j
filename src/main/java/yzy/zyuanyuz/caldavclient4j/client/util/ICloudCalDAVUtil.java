@@ -16,6 +16,7 @@ import org.apache.jackrabbit.webdav.property.DavPropertyName;
 import org.apache.jackrabbit.webdav.property.DavPropertyNameSet;
 import org.w3c.dom.Document;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,7 +26,7 @@ import java.util.stream.Collectors;
  */
 public class ICloudCalDAVUtil {
 
-  private ICloudCalDAVUtil(){}
+  private ICloudCalDAVUtil() {}
 
   private static final String CURRENT_USER_PRINCIPAL_STR = "current-user-principal";
 
@@ -44,6 +45,21 @@ public class ICloudCalDAVUtil {
   }
 
   /**
+   * @param httpClient
+   * @param principalId
+   * @return
+   */
+  public static List<String> getAllResource(
+      HttpClient httpClient, CalDAV4JMethodFactory methodFactory, String principalId)
+      throws IOException {
+    String url = ICLOUD_CALDAV_HOST + principalId + "/calendars";
+    HttpPropFindMethod propFindMethod =
+        methodFactory.createPropFindMethod(url, new DavPropertyNameSet(), 0);
+    return null;
+  }
+
+  /**
+   * TODO
    * @param calendarFolder
    * @param httpClient
    * @param methodFactory
@@ -53,7 +69,7 @@ public class ICloudCalDAVUtil {
   public static List<String> getEventUidList(
       String calendarFolder, HttpClient httpClient, CalDAV4JMethodFactory methodFactory)
       throws Exception {
-    String userId = getPrincipalId(httpClient, methodFactory);  // e.g. 16884482682
+    String userId = getPrincipalId(httpClient, methodFactory); // e.g. 16884482682
     String url = ICLOUD_CALDAV_HOST + userId + "/calendars/" + calendarFolder;
 
     DavPropertyNameSet properties = new DavPropertyNameSet();
@@ -81,11 +97,14 @@ public class ICloudCalDAVUtil {
     return ICLOUD_CALDAV_HOST + "/" + principal + "/calendars/" + calFolder + "/" + uuid + ".ics";
   }
 
-  public static String getUidFromHref(String href){
-    return href.substring(href.lastIndexOf("/")+1,href.indexOf(".ics"));
+  public static String getUidFromHref(String href) {
+    return href.substring(href.lastIndexOf("/") + 1, href.indexOf(".ics"));
   }
 
-  public static List<VEvent> getEventsFromCalendars(List<Calendar> calendars){
-    return calendars.stream().flatMap(c->c.getComponents(Component.VEVENT).stream()).map(e->(VEvent)e).collect(Collectors.toList());
+  public static List<VEvent> getEventsFromCalendars(List<Calendar> calendars) {
+    return calendars.stream()
+        .flatMap(c -> c.getComponents(Component.VEVENT).stream())
+        .map(e -> (VEvent) e)
+        .collect(Collectors.toList());
   }
 }
