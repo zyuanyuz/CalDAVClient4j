@@ -1,7 +1,6 @@
 package yzy.zyuanyuz.caldavclient4j.client.icloud;
 
 import com.github.caldav4j.CalDAVConstants;
-import com.github.caldav4j.CalDAVResource;
 import com.github.caldav4j.exceptions.CalDAV4JException;
 import com.github.caldav4j.methods.CalDAV4JMethodFactory;
 import com.github.caldav4j.methods.HttpCalDAVReportMethod;
@@ -25,16 +24,12 @@ import org.apache.http.conn.ssl.TrustAllStrategy;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContextBuilder;
-import org.apache.jackrabbit.webdav.DavException;
 import org.apache.jackrabbit.webdav.MultiStatusResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import yzy.zyuanyuz.caldavclient4j.client.AbstractCalDAVManager;
 import yzy.zyuanyuz.caldavclient4j.client.util.ICloudCalDAVUtil;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.text.ParseException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -184,7 +179,6 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
   }
 
   /**
-   *
    * @param beginDate
    * @param endDate
    * @return
@@ -213,6 +207,7 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
   // TODO VTimezone how use it?
   /**
    * Add
+   *
    * @param event
    * @throws CalDAV4JException
    */
@@ -220,9 +215,9 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
     if (ICalendarUtils.getUIDValue(event) == null) {
       // if the event haven't uuid
       String uuid = UUID.randomUUID().toString();
-      try{
+      try {
         event.getProperty(Property.UID).setValue(uuid);
-      }catch(Exception e){
+      } catch (Exception e) {
         throw new CalDAV4JException("Add event and set uuid throws a exception.");
       }
     } else if (eventsMap.containsKey(ICalendarUtils.getUIDValue(event))) {

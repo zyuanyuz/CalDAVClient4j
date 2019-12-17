@@ -12,6 +12,10 @@ import net.fortuna.ical4j.model.component.VEvent;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.util.EntityUtils;
+import org.apache.jackrabbit.webdav.DavException;
+import org.apache.jackrabbit.webdav.DavSessionProvider;
+import org.apache.jackrabbit.webdav.MultiStatus;
+import org.apache.jackrabbit.webdav.MultiStatusResponse;
 import org.apache.jackrabbit.webdav.property.DavPropertyName;
 import org.apache.jackrabbit.webdav.property.DavPropertyNameSet;
 import org.w3c.dom.Document;
@@ -19,6 +23,8 @@ import org.w3c.dom.Document;
 import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static org.apache.jackrabbit.webdav.property.DavPropertyName.DISPLAYNAME;
 
 /**
  * @author George Yu
@@ -45,21 +51,26 @@ public class ICloudCalDAVUtil {
   }
 
   /**
-   * @param httpClient
+   * TODO
+   * @param httpClient the http client with user auth
    * @param principalId
    * @return
    */
-  public static List<String> getAllResource(
+  public static List<String> getAllResourceFromServer(
       HttpClient httpClient, CalDAV4JMethodFactory methodFactory, String principalId)
-      throws IOException {
+          throws IOException, DavException {
     String url = ICLOUD_CALDAV_HOST + principalId + "/calendars";
+    DavPropertyNameSet propertyNameSet = new DavPropertyNameSet();
+    propertyNameSet.add(DISPLAYNAME);
     HttpPropFindMethod propFindMethod =
         methodFactory.createPropFindMethod(url, new DavPropertyNameSet(), 0);
+    HttpResponse response = httpClient.execute(propFindMethod);
+    MultiStatusResponse[] multiStatusResponse = propFindMethod.getResponseBodyAsMultiStatus(response).getResponses();
+
     return null;
   }
 
   /**
-   * TODO
    * @param calendarFolder
    * @param httpClient
    * @param methodFactory
