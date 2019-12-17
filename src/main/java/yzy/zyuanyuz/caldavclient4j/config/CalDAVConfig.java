@@ -13,6 +13,7 @@ public class CalDAVConfig {
 
     @Bean
     public ICloudCalDAVManager iCloudCalDAVManager() throws Exception{
-        return new ICloudCalDAVManager("zoom2019097@icloud.com","itkg-ogby-zxti-hpav","work");
+        return new ICloudCalDAVManager("zyuanyuz@icloud.com","fnns-astr-mvtm-bmes","work");
     }
+
 }

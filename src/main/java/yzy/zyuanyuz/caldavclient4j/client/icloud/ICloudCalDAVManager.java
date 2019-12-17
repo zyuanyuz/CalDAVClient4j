@@ -14,20 +14,13 @@ import net.fortuna.ical4j.model.Calendar;
 import net.fortuna.ical4j.model.Date;
 import net.fortuna.ical4j.model.Property;
 import net.fortuna.ical4j.model.component.VEvent;
-import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.CredentialsProvider;
-import org.apache.http.conn.ssl.NoopHostnameVerifier;
-import org.apache.http.conn.ssl.TrustAllStrategy;
-import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.jackrabbit.webdav.MultiStatusResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import yzy.zyuanyuz.caldavclient4j.client.AbstractCalDAVManager;
+import yzy.zyuanyuz.caldavclient4j.client.commons.EventEntry;
+import yzy.zyuanyuz.caldavclient4j.client.commons.ICloudCalDAVConstants;
 import yzy.zyuanyuz.caldavclient4j.client.util.ICloudCalDAVUtil;
 
 import java.util.*;
@@ -38,7 +31,8 @@ import static java.util.stream.Collectors.toList;
 import static net.fortuna.ical4j.model.Component.VEVENT;
 
 /**
- * TODO now this ICloudCalDAVManager is not thread safe
+ * TODO now this ICloudCalDAVManager is not thread safe manage CalDAV data belong to a specify
+ * resource
  *
  * @author zyuanyuz
  * @since 2019/10/15 20:59
@@ -55,26 +49,8 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
   public ICloudCalDAVManager(String appleId, String password, String calName) throws Exception {
     this.calName = calName;
     this.eventsMap = new ConcurrentHashMap<>();
-
-    HttpHost target = new HttpHost("caldav.icloud.com", 443, "https");
-    CredentialsProvider provider = new BasicCredentialsProvider();
-    provider.setCredentials(
-        new AuthScope(target.getHostName(), target.getPort()),
-        new UsernamePasswordCredentials(appleId, password));
-    this.httpClient =
-        HttpClients.custom()
-            .setSSLContext(
-                new SSLContextBuilder().loadTrustMaterial(null, TrustAllStrategy.INSTANCE).build())
-            .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE)
-            .setDefaultCredentialsProvider(provider)
-            .build();
-    setMethodFactory(new CalDAV4JMethodFactory());
-
-    setMethodFactory(new CalDAV4JMethodFactory());
-
+    this.httpClient = ICloudCalDAVUtil.createHttpClieknt(appleId, password);
     this.principal = ICloudCalDAVUtil.getPrincipalId(this.httpClient, this.methodFactory);
-    // this.principal = initPrincipal();
-
     this.calFolderPath =
         ICloudCalDAVConstants.APPLE_CALDAV_HOST
             + "/"
@@ -82,7 +58,8 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
             + "/calendars/"
             + this.calName
             + "/";
-    setCalendarCollectionRoot(this.calFolderPath);
+    super.setCalendarCollectionRoot(this.calFolderPath);
+    super.setMethodFactory(new CalDAV4JMethodFactory());
   }
 
   /**
