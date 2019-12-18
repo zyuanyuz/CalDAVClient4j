@@ -112,17 +112,17 @@ public final class ICloudCalDAVUtil {
   }
 
   /**
-   * @param calendarFolder
+   * @param resourceName
    * @param httpClient
    * @param methodFactory
    * @return
    * @throws Exception
    */
   public static List<String> getEventUidList(
-      String calendarFolder, HttpClient httpClient, CalDAV4JMethodFactory methodFactory)
+      String resourceName, HttpClient httpClient, CalDAV4JMethodFactory methodFactory)
       throws Exception {
     String userId = getPrincipalId(httpClient, methodFactory); // e.g. 16884482682
-    String url = ICLOUD_CALDAV_URI + userId + "/calendars/" + calendarFolder;
+    String url = ICLOUD_CALDAV_URI + userId + "/calendars/" + resourceName;
 
     DavPropertyNameSet properties = new DavPropertyNameSet();
     properties.add(DavPropertyName.GETETAG);
@@ -141,8 +141,9 @@ public final class ICloudCalDAVUtil {
     //    return Arrays.stream(multiStatusResponses)
     //        .skip(1)
     //        .map(MultiStatusResponse::getHref)
-    //        .map(href -> href.substring(href.indexOf(calendarFolder) + calendarFolder.length()))
+    //        .map(href -> href.substring(href.indexOf(resourceName) + resourceName.length()))
     //        .collect(Collectors.toList());
+
   }
 
   public static String pathToCalendar(String principal, String calFolder, String uuid) {
@@ -153,6 +154,11 @@ public final class ICloudCalDAVUtil {
     return href.substring(href.lastIndexOf("/") + 1, href.indexOf(".ics"));
   }
 
+  /**
+   * for iCloud event from calendar
+   * @param calendars
+   * @return
+   */
   public static List<VEvent> getEventsFromCalendars(List<Calendar> calendars) {
     return calendars.stream()
         .flatMap(c -> c.getComponents(Component.VEVENT).stream())
