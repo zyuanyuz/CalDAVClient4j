@@ -31,7 +31,6 @@ import static java.util.stream.Collectors.toList;
 import static net.fortuna.ical4j.model.Component.VEVENT;
 
 /**
- * TODO now this ICloudCalDAVManager is not thread safe manage CalDAV data belong to a specify
  * resource
  *
  * @author zyuanyuz
@@ -47,9 +46,10 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
   private String calFolderPath;
 
   public ICloudCalDAVManager(String appleId, String password, String calName) throws Exception {
+    super.setMethodFactory(new CalDAV4JMethodFactory());
     this.calName = calName;
     this.eventsMap = new ConcurrentHashMap<>();
-    this.httpClient = ICloudCalDAVUtil.createHttpClieknt(appleId, password);
+    this.httpClient = ICloudCalDAVUtil.createHttpClient(appleId, password);
     this.principal = ICloudCalDAVUtil.getPrincipalId(this.httpClient, this.methodFactory);
     this.calFolderPath =
         ICloudCalDAVConstants.APPLE_CALDAV_HOST
@@ -58,8 +58,7 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
             + "/calendars/"
             + this.calName
             + "/";
-    super.setCalendarCollectionRoot(this.calFolderPath);
-    super.setMethodFactory(new CalDAV4JMethodFactory());
+    this.setCalendarCollectionRoot(this.calFolderPath);
   }
 
   /**

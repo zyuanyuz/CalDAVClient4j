@@ -26,9 +26,10 @@ public class ICloudController {
 
   @GetMapping("/resource")
   public void getResource() throws Exception {
-    ICloudCalDAVUtil.getAllResourceFromServer(
-        iCloudCalDAVManager.getHttpClient(),
-        iCloudCalDAVManager.getMethodFactory(),
-        iCloudCalDAVManager.getPrincipal());
+    System.out.println(
+        ICloudCalDAVUtil.getAllResourceFromServer(
+            iCloudCalDAVManager.getHttpClient(),
+            iCloudCalDAVManager.getMethodFactory(),
+            iCloudCalDAVManager.getPrincipal()));
   }
 }

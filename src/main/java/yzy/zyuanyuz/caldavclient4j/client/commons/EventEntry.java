@@ -45,4 +45,13 @@ public class EventEntry {
   public void setEvent(VEvent event) {
     this.event = event;
   }
+
+  /**
+   * TODO toString implement
+   * @return
+   */
+  @Override
+  public String toString() {
+    return super.toString();
+  }
 }

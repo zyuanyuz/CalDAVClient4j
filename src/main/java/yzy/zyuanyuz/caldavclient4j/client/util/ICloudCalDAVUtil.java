@@ -64,7 +64,7 @@ public final class ICloudCalDAVUtil {
    * @param password
    * @return
    */
-  public static HttpClient createHttpClieknt(String appleId, String password)
+  public static HttpClient createHttpClient(String appleId, String password)
       throws CalDAV4JException {
     HttpHost target = new HttpHost("caldav.icloud.com", 443, "https");
     CredentialsProvider provider = new BasicCredentialsProvider();
@@ -96,18 +96,19 @@ public final class ICloudCalDAVUtil {
     String url = ICLOUD_CALDAV_URI + principalId + "/calendars";
     DavPropertyNameSet propertyNameSet = new DavPropertyNameSet();
     propertyNameSet.add(DISPLAYNAME);
-    HttpPropFindMethod propFindMethod =
-        methodFactory.createPropFindMethod(url, new DavPropertyNameSet(), 0);
-    MultiStatusResponse[] multiStatusResponse =
+    HttpPropFindMethod propFindMethod = methodFactory.createPropFindMethod(url, propertyNameSet, 1);
+    MultiStatusResponse[] multiStatusResponses =
         propFindMethod
             .getResponseBodyAsMultiStatus(httpClient.execute(propFindMethod))
             .getResponses();
-    for (MultiStatusResponse res : multiStatusResponse) {
-      if (res.getStatus()[0].getStatusCode() == CalDAVStatus.SC_OK) {
-        Arrays.stream(res.getStatus()).forEach(System.out::println);
-      }
-    }
-    return null;
+    return Arrays.stream(multiStatusResponses)
+        .filter(res -> null != res.getProperties(CalDAVStatus.SC_OK).get(DISPLAYNAME))
+        .map(
+            res ->
+                new ResourceEntry(
+                    res.getHref(),
+                    (String) res.getProperties(CalDAVStatus.SC_OK).get(DISPLAYNAME).getValue()))
+        .collect(Collectors.toList());
   }
 
   /**

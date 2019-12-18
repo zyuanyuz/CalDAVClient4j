@@ -10,7 +10,7 @@ import org.apache.http.client.HttpClient;
 public abstract class AbstractCalDAVManager extends CalDAVCollection {
   protected HttpClient httpClient = null;
 
-  protected String calName; // calendar folder name such as "work",as resource name
+  protected String calName; // calendar folder name such as "work",as resource display name
 
   public void setHttpClient(HttpClient httpClient) {
     this.httpClient = httpClient;
