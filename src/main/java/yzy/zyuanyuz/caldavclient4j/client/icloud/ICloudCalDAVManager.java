@@ -24,6 +24,8 @@ import yzy.zyuanyuz.caldavclient4j.client.commons.ICloudCalDAVConstants;
 import yzy.zyuanyuz.caldavclient4j.client.util.ICloudCalDAVUtil;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -139,6 +141,7 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
   }
 
   /**
+   * 
    * @param uuidList
    * @return
    * @throws Exception
@@ -149,26 +152,28 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
             .map(uuid -> ICloudCalDAVUtil.pathToCalendar(this.principal, this.calName, uuid))
             .collect(toList());
 
-    // TODO test
     return multigetCalendarUris(this.httpClient, urls).stream()
         .map(c -> (VEvent) (c.getComponent(VEVENT)))
         .collect(toList());
   }
 
   /**
-   * for calendar service
+   * for calendar service to get all events for three days
+   * TODO test
    * @return
    * @throws CalDAV4JException
    */
-  public List<VEvent> getEventsForThreeDays() throws CalDAV4JException{
-//    LocalDateTime beginDate =
-//            Date endDate = new Date(beginDate.getTime()+);
-//    return this.getEvents(beginDate,endDate);
-    return null;
+  public List<VEvent> getEventsForThreeDays() throws CalDAV4JException {
+    LocalDateTime beginDateTime = LocalDateTime.now();
+    LocalDateTime endDateTime = beginDateTime.plusDays(3L);
+    Date beginDate = new Date(beginDateTime.atZone(ZoneOffset.UTC).toEpochSecond());
+    Date endDate = new Date(endDateTime.atZone(ZoneOffset.UTC).toEpochSecond());
+    return this.getEvents(beginDate, endDate);
   }
 
   /**
    * TODO test timezone problem,include not finish event problem,
+   *
    * @param beginDate
    * @param endDate
    * @return
