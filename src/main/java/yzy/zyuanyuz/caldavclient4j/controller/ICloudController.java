@@ -32,4 +32,9 @@ public class ICloudController {
             iCloudCalDAVManager.getMethodFactory(),
             iCloudCalDAVManager.getPrincipal()));
   }
+
+  @GetMapping("/three")
+  public void getThreeDaysEvents() throws Exception {
+    System.out.println(iCloudCalDAVManager.getEventsForThreeDays());
+  }
 }

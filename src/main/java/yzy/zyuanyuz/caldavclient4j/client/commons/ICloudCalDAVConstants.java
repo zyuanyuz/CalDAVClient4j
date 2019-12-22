@@ -11,8 +11,8 @@ public final class ICloudCalDAVConstants {
   private ICloudCalDAVConstants() {}
 
   // some http arg
-  public static final String ICLOUD_CALDAV_URI = "https://caldav.icloud.com:443/";
-  public static final String APPLE_CALDAV_HOST = "https://caldav.icloud.com/";
+  public static final String ICLOUD_CALDAV_HOST_PORT = "https://caldav.icloud.com:443/";
+  public static final String ICLOUD_CALDAV_HOST = "https://caldav.icloud.com/";
   public static final int APPLE_CALDAV_PORT = 443;
   public static final String APPLE_CALDAV_URL_SCHEME = "https";
 

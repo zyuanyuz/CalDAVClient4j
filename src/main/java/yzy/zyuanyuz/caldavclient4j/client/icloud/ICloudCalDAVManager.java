@@ -20,11 +20,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import yzy.zyuanyuz.caldavclient4j.client.AbstractCalDAVManager;
 import yzy.zyuanyuz.caldavclient4j.client.commons.EventEntry;
-import yzy.zyuanyuz.caldavclient4j.client.commons.ICloudCalDAVConstants;
 import yzy.zyuanyuz.caldavclient4j.client.util.ICloudCalDAVUtil;
 
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -32,6 +30,7 @@ import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.toList;
 import static net.fortuna.ical4j.model.Component.VEVENT;
+import static yzy.zyuanyuz.caldavclient4j.client.commons.ICloudCalDAVConstants.ICLOUD_CALDAV_HOST;
 
 /**
  * resource
@@ -55,12 +54,7 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
     this.httpClient = ICloudCalDAVUtil.createHttpClient(appleId, password);
     this.principal = ICloudCalDAVUtil.getPrincipalId(this.httpClient, this.methodFactory);
     this.calFolderPath =
-        ICloudCalDAVConstants.APPLE_CALDAV_HOST
-            + "/"
-            + this.principal
-            + "/calendars/"
-            + this.calName
-            + "/";
+        ICLOUD_CALDAV_HOST + "/" + this.principal + "/calendars/" + this.calName + "/";
     this.setCalendarCollectionRoot(this.calFolderPath);
   }
 
@@ -141,7 +135,6 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
   }
 
   /**
-   * 
    * @param uuidList
    * @return
    * @throws Exception
@@ -158,8 +151,8 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
   }
 
   /**
-   * for calendar service to get all events for three days
-   * TODO test
+   * for calendar service to get all events for three days (72 hours) TODO test
+   *
    * @return
    * @throws CalDAV4JException
    */
@@ -172,7 +165,7 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
   }
 
   /**
-   * TODO test timezone problem,include not finish event problem,
+   * TODO test timezone problem,include event in process problem,
    *
    * @param beginDate
    * @param endDate
@@ -235,6 +228,12 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
     String pathToDelete = this.calFolderPath + uuid + ".ics";
     delete(this.httpClient, pathToDelete);
     eventsMap.remove(uuid);
+  }
+
+  // fix some problems of ical4j
+  @Override
+  public String getCalendarCollectionRoot() {
+    return ICLOUD_CALDAV_HOST + calendarCollectionRoot;
   }
 
   // getter and setter

@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
 
 import static org.apache.jackrabbit.webdav.property.DavPropertyName.DISPLAYNAME;
 import static yzy.zyuanyuz.caldavclient4j.client.commons.ICloudCalDAVConstants.CURRENT_USER_PRINCIPAL_STR;
-import static yzy.zyuanyuz.caldavclient4j.client.commons.ICloudCalDAVConstants.ICLOUD_CALDAV_URI;
+import static yzy.zyuanyuz.caldavclient4j.client.commons.ICloudCalDAVConstants.ICLOUD_CALDAV_HOST_PORT;
 
 /**
  * @author George Yu
@@ -52,7 +52,7 @@ public final class ICloudCalDAVUtil {
     DavPropertyNameSet nameSet = new DavPropertyNameSet();
     nameSet.add(DavPropertyName.create(CURRENT_USER_PRINCIPAL_STR));
     HttpPropFindMethod propFindMethod =
-        methodFactory.createPropFindMethod(ICLOUD_CALDAV_URI, nameSet, 0);
+        methodFactory.createPropFindMethod(ICLOUD_CALDAV_HOST_PORT, nameSet, 0);
     HttpResponse response = httpClient.execute(propFindMethod);
     Document doc = propFindMethod.getResponseBodyAsDocument(response.getEntity());
     String href = doc.getElementsByTagName("href").item(1).getFirstChild().getNodeValue();
@@ -93,7 +93,7 @@ public final class ICloudCalDAVUtil {
   public static List<ResourceEntry> getAllResourceFromServer(
       HttpClient httpClient, CalDAV4JMethodFactory methodFactory, String principalId)
       throws IOException, DavException {
-    String url = ICLOUD_CALDAV_URI + principalId + "/calendars";
+    String url = ICLOUD_CALDAV_HOST_PORT + principalId + "/calendars";
     DavPropertyNameSet propertyNameSet = new DavPropertyNameSet();
     propertyNameSet.add(DISPLAYNAME);
     HttpPropFindMethod propFindMethod = methodFactory.createPropFindMethod(url, propertyNameSet, 1);
@@ -122,7 +122,7 @@ public final class ICloudCalDAVUtil {
       String resourceName, HttpClient httpClient, CalDAV4JMethodFactory methodFactory)
       throws Exception {
     String userId = getPrincipalId(httpClient, methodFactory); // e.g. 16884482682
-    String url = ICLOUD_CALDAV_URI + userId + "/calendars/" + resourceName;
+    String url = ICLOUD_CALDAV_HOST_PORT + userId + "/calendars/" + resourceName;
 
     DavPropertyNameSet properties = new DavPropertyNameSet();
     properties.add(DavPropertyName.GETETAG);
@@ -147,7 +147,7 @@ public final class ICloudCalDAVUtil {
   }
 
   public static String pathToCalendar(String principal, String calFolder, String uuid) {
-    return ICLOUD_CALDAV_URI + "/" + principal + "/calendars/" + calFolder + "/" + uuid + ".ics";
+    return ICLOUD_CALDAV_HOST_PORT + "/" + principal + "/calendars/" + calFolder + "/" + uuid + ".ics";
   }
 
   public static String getUidFromHref(String href) {
