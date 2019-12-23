@@ -5,9 +5,11 @@ import com.github.caldav4j.exceptions.CalDAV4JException;
 import com.github.caldav4j.methods.CalDAV4JMethodFactory;
 import com.github.caldav4j.methods.HttpCalDAVReportMethod;
 import com.github.caldav4j.methods.HttpPropFindMethod;
+import com.github.caldav4j.model.request.CalendarData;
 import com.github.caldav4j.model.request.CalendarQuery;
 import com.github.caldav4j.model.request.CompFilter;
 import com.github.caldav4j.util.CalDAVStatus;
+import com.github.caldav4j.util.XMLUtils;
 import net.fortuna.ical4j.model.Calendar;
 import net.fortuna.ical4j.model.Component;
 import net.fortuna.ical4j.model.component.VEvent;
@@ -121,20 +123,21 @@ public final class ICloudCalDAVUtil {
   public static List<String> getEventUidList(
       String resourceName, HttpClient httpClient, CalDAV4JMethodFactory methodFactory)
       throws Exception {
-    String userId = getPrincipalId(httpClient, methodFactory); // e.g. 16884482682
-    String url = ICLOUD_CALDAV_HOST_PORT + userId + "/calendars/" + resourceName;
+    String principalId = getPrincipalId(httpClient, methodFactory); // e.g. 16884482682
+    String url = ICLOUD_CALDAV_HOST_PORT + principalId + "/calendars/" + resourceName;
 
     DavPropertyNameSet properties = new DavPropertyNameSet();
     properties.add(DavPropertyName.GETETAG);
 
-    CompFilter filter = new CompFilter(Calendar.VCALENDAR);
-    filter.addCompFilter(new CompFilter(Component.VEVENT));
+    CompFilter calendarFilter = new CompFilter(Calendar.VCALENDAR);
+    calendarFilter.addCompFilter(new CompFilter(Component.VEVENT));
 
-    CalendarQuery query = new CalendarQuery(properties, filter, null, false, false);
+    CalendarQuery query = new CalendarQuery(properties, calendarFilter, null, false, false);
+
     HttpCalDAVReportMethod reportMethod =
         methodFactory.createCalDAVReportMethod(url, query, CalDAVConstants.DEPTH_1);
     HttpResponse response = httpClient.execute(reportMethod);
-    System.out.println(EntityUtils.toString(response.getEntity()));
+    //System.out.println(EntityUtils.toString(response.getEntity()));
     return null;
     //    MultiStatus multiStatus = reportMethod.getResponseBodyAsMultiStatus(response);
     //    MultiStatusResponse[] multiStatusResponses = multiStatus.getResponses();
@@ -143,8 +146,9 @@ public final class ICloudCalDAVUtil {
     //        .map(MultiStatusResponse::getHref)
     //        .map(href -> href.substring(href.indexOf(resourceName) + resourceName.length()))
     //        .collect(Collectors.toList());
-
   }
+
+
 
   public static String pathToCalendar(String principal, String calFolder, String uuid) {
     return ICLOUD_CALDAV_HOST_PORT + "/" + principal + "/calendars/" + calFolder + "/" + uuid + ".ics";

@@ -37,4 +37,12 @@ public class ICloudController {
   public void getThreeDaysEvents() throws Exception {
     System.out.println(iCloudCalDAVManager.getEventsForThreeDays());
   }
+
+  @GetMapping("/refresh")
+  public void refreshEvents() throws Exception {
+    ICloudCalDAVUtil.getEventUidList(
+        "28C804FE-B39D-4CFD-B09D-0EAA4DB4E7BB",
+        iCloudCalDAVManager.getHttpClient(),
+        iCloudCalDAVManager.getMethodFactory());
+  }
 }
