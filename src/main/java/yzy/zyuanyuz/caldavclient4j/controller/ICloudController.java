@@ -35,7 +35,7 @@ public class ICloudController {
 
   @GetMapping("/three")
   public void getThreeDaysEvents() throws Exception {
-    System.out.println(iCloudCalDAVManager.getEventsForThreeDays());
+    iCloudCalDAVManager.getEventsForThreeDays();
   }
 
   @GetMapping("/refresh")
