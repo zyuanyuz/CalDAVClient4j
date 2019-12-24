@@ -15,6 +15,8 @@ repositories {
 dependencies {
     // https://mvnrepository.com/artifact/com.github.caldav4j/caldav4j
     compile group: 'com.github.caldav4j', name: 'caldav4j', version: '1.0.0-rc.2'
+    // https://mvnrepository.com/artifact/org.mnode.ical4j/ical4j-extensions
+    compile group: 'org.mnode.ical4j', name: 'ical4j-extensions', version: '1.0.3'
     implementation 'org.ehcache:ehcache:3.8.1'
     // https://mvnrepository.com/artifact/javax.cache/cache-api
     compile group: 'javax.cache', name: 'cache-api', version: '1.1.1'

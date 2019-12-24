@@ -8,15 +8,12 @@ import com.github.caldav4j.methods.HttpCalDAVReportMethod;
 import com.github.caldav4j.model.request.*;
 import com.github.caldav4j.model.response.CalendarDataProperty;
 import com.github.caldav4j.util.CalDAVStatus;
-import com.github.caldav4j.util.GenerateQuery;
 import com.github.caldav4j.util.ICalendarUtils;
-import com.github.caldav4j.util.XMLUtils;
 import net.fortuna.ical4j.model.Calendar;
 import net.fortuna.ical4j.model.Date;
 import net.fortuna.ical4j.model.*;
 import net.fortuna.ical4j.model.component.VEvent;
 import org.apache.http.HttpResponse;
-import org.apache.http.util.EntityUtils;
 import org.apache.jackrabbit.webdav.MultiStatusResponse;
 import org.apache.jackrabbit.webdav.property.DavPropertyName;
 import org.apache.jackrabbit.webdav.property.DavPropertyNameSet;
@@ -33,7 +30,6 @@ import java.util.stream.Collectors;
 import static java.util.stream.Collectors.toList;
 import static net.fortuna.ical4j.model.Calendar.VCALENDAR;
 import static net.fortuna.ical4j.model.Component.VEVENT;
-import static net.fortuna.ical4j.model.Property.VERSION;
 import static yzy.zyuanyuz.caldavclient4j.client.commons.ICloudCalDAVConstants.ICLOUD_CALDAV_HOST;
 
 /**
@@ -193,24 +189,24 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
           methodFactory.createCalDAVReportMethod(
               this.calFolderPath, query, CalDAVConstants.DEPTH_1);
       HttpResponse response = httpClient.execute(reportMethod);
-      // System.out.println(EntityUtils.toString(response.getEntity()));
       multiStatusResponses = reportMethod.getResponseBodyAsMultiStatus(response).getResponses();
     } catch (Exception e) {
       throw new CalDAV4JException(e.getMessage());
     }
 
-    // TODO bug fix
+    // TODO EMAIL isn't a standard parameter,so ical4j-extension is necessary
     List<VEvent> events = new ArrayList<>();
     for (MultiStatusResponse statusResponse : multiStatusResponses) {
       //      String etag = CalendarDataProperty.getEtagfromResponse(statusResponse);
       CalDAVResource calDAVResource = new CalDAVResource(statusResponse);
       //      events.add((VEvent) (calDAVResource.getCalendar().getComponent(VEVENT)));
-
     }
     return events;
   }
 
   /**
+   * TODO [bug] here use the url to locate the calendar resource,but getCollectionRoot() is Override
+   *
    * @param uuid
    * @return
    * @throws CalDAV4JException
