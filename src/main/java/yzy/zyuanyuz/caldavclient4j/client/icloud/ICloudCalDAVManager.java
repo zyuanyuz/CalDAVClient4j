@@ -1,6 +1,7 @@
 package yzy.zyuanyuz.caldavclient4j.client.icloud;
 
 import com.github.caldav4j.CalDAVConstants;
+import com.github.caldav4j.CalDAVResource;
 import com.github.caldav4j.exceptions.CalDAV4JException;
 import com.github.caldav4j.methods.CalDAV4JMethodFactory;
 import com.github.caldav4j.methods.HttpCalDAVReportMethod;
@@ -153,19 +154,21 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
   }
 
   /**
-   * for calendar service to get all events for three days (72 hours) TODO test
+   * for calendar service to get all events for three days (72 hours) TODO test note: this Date must
+   * be set as UTC timezone
    *
    * @return
    * @throws CalDAV4JException
    */
   public List<VEvent> getEventsForThreeDays() throws CalDAV4JException {
-    DateTime beginDate = new DateTime();
+    DateTime beginDate = new DateTime(true);
     DateTime endDate = new DateTime(beginDate.getTime() + 3 * 24 * 60 * 60 * 1000);
+    endDate.setUtc(true);
     return this.getTimeRangeEvents(beginDate, endDate);
   }
 
   /**
-   * TODO test timezone problem,include event in process problem,
+   * the date must be utc timezone(date end with 'Z')
    *
    * @param beginDate
    * @param endDate
@@ -178,28 +181,33 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
 
     CompFilter calendarFilter = new CompFilter(VCALENDAR);
     CompFilter eventFilter = new CompFilter(Component.VEVENT);
-    //eventFilter.setTimeRange(new TimeRange(beginDate, endDate));
+    eventFilter.setTimeRange(new TimeRange(beginDate, endDate));
     calendarFilter.addCompFilter(eventFilter);
 
-    CalendarData calendarData =
-        new CalendarData(); // use for setting recurrence event and get calendar data
-    Comp calendarComp = new Comp(VCALENDAR);
-    calendarComp.addComp(new Comp(VERSION));
-    calendarComp.addComp(new Comp(VEVENT));
-    calendarData.setComp(calendarComp);
-
-    CalendarQuery query = new CalendarQuery(properties, calendarFilter, null, false, false);
-    System.out.println(XMLUtils.toPrettyXML(query.createNewDocument()));
+    CalendarQuery query =
+        new CalendarQuery(properties, calendarFilter, new CalendarData(), false, false);
+    // System.out.println(XMLUtils.toPrettyXML(query.createNewDocument()));
+    MultiStatusResponse[] multiStatusResponses;
     try {
       HttpCalDAVReportMethod reportMethod =
           methodFactory.createCalDAVReportMethod(
               this.calFolderPath, query, CalDAVConstants.DEPTH_1);
       HttpResponse response = httpClient.execute(reportMethod);
-      System.out.println(EntityUtils.toString(response.getEntity()));
+      // System.out.println(EntityUtils.toString(response.getEntity()));
+      multiStatusResponses = reportMethod.getResponseBodyAsMultiStatus(response).getResponses();
     } catch (Exception e) {
       throw new CalDAV4JException(e.getMessage());
     }
-    return null;
+
+    // TODO bug fix
+    List<VEvent> events = new ArrayList<>();
+    for (MultiStatusResponse statusResponse : multiStatusResponses) {
+      //      String etag = CalendarDataProperty.getEtagfromResponse(statusResponse);
+      CalDAVResource calDAVResource = new CalDAVResource(statusResponse);
+      //      events.add((VEvent) (calDAVResource.getCalendar().getComponent(VEVENT)));
+
+    }
+    return events;
   }
 
   /**
@@ -213,7 +221,6 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
     return ICalendarUtils.getFirstEvent(calendar);
   }
 
-  // TODO VTimezone how use it?
   /**
    * Add a event to server
    *

@@ -1,5 +1,6 @@
 package yzy.zyuanyuz.caldavclient4j.controller;
 
+import net.fortuna.ical4j.model.component.VEvent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,10 +19,9 @@ public class ICloudController {
 
   @GetMapping("/get")
   public String getEvent() throws Exception {
-    String uuid = "EFE46473-85FB-4CD6-BF4B-A383B1F8EBBF";
-    iCloudCalDAVManager.refreshAllEvents();
-    // iCloudCalDAVManager.refreshEvent(uuid);
-    return iCloudCalDAVManager.getETagFromServer(uuid);
+    String eventUid = "E5DD0E30-A17A-45DA-A3ED-B1703C461378";
+    VEvent event = iCloudCalDAVManager.getEventFromServer(eventUid);
+    return event.toString();
   }
 
   @GetMapping("/resource")
@@ -35,7 +35,7 @@ public class ICloudController {
 
   @GetMapping("/three")
   public void getThreeDaysEvents() throws Exception {
-    iCloudCalDAVManager.getEventsForThreeDays();
+    System.out.println(iCloudCalDAVManager.getEventsForThreeDays());
   }
 
   @GetMapping("/refresh")
