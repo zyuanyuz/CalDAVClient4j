@@ -9,6 +9,9 @@ import com.github.caldav4j.model.request.*;
 import com.github.caldav4j.model.response.CalendarDataProperty;
 import com.github.caldav4j.util.CalDAVStatus;
 import com.github.caldav4j.util.ICalendarUtils;
+import net.fortuna.ical4j.data.CalendarBuilder;
+import net.fortuna.ical4j.data.CalendarParserFactory;
+import net.fortuna.ical4j.extensions.parameter.Email;
 import net.fortuna.ical4j.model.Calendar;
 import net.fortuna.ical4j.model.Date;
 import net.fortuna.ical4j.model.*;
@@ -45,7 +48,7 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
 
   private Map<String /*event uuid*/, EventEntry> eventsMap;
 
-  private String calFolderPath;
+  private String calFolderPath; /*resource url*/
 
   public ICloudCalDAVManager(String appleId, String password, String calName) throws Exception {
     super.setMethodFactory(new CalDAV4JMethodFactory());
@@ -69,7 +72,7 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
   }
 
   /** TODO test */
-  public void refreshAllEvents() throws CalDAV4JException {
+  public void refreshAllCachedEvents() throws CalDAV4JException {
     List<String> calendarUris = new ArrayList<>(this.eventsMap.keySet());
 
     CalendarMultiget query = new CalendarMultiget();
@@ -119,7 +122,7 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
    *
    * @param uuid the event uuid
    */
-  public boolean refreshEvent(String uuid) throws CalDAV4JException {
+  public boolean refreshCachedEvent(String uuid) throws CalDAV4JException {
     String etag = this.getETagFromServer(uuid);
     if (null == etag) { // TODO Test when the event deleted from server
       eventsMap.remove(uuid);
@@ -150,21 +153,34 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
   }
 
   /**
-   * for calendar service to get all events for three days (72 hours) TODO test note: this Date must
-   * be set as UTC timezone
+   * for calendar service to get all events for three days (72 hours). note: this Date must be set
+   * as UTC timezone.
    *
    * @return
    * @throws CalDAV4JException
    */
   public List<VEvent> getEventsForThreeDays() throws CalDAV4JException {
+    return this.getEventsForNDays(3);
+  }
+
+  /**
+   * for calendar service to get all events for n days. note: this Date must be set * as UTC
+   * timezone.
+   *
+   * @param n
+   * @return
+   * @throws CalDAV4JException
+   */
+  public List<VEvent> getEventsForNDays(int n) throws CalDAV4JException {
     DateTime beginDate = new DateTime(true);
-    DateTime endDate = new DateTime(beginDate.getTime() + 3 * 24 * 60 * 60 * 1000);
+    DateTime endDate = new DateTime(beginDate.getTime() + n * 24 * 60 * 60 * 1000);
     endDate.setUtc(true);
     return this.getTimeRangeEvents(beginDate, endDate);
   }
 
   /**
-   * the date must be utc timezone(date end with 'Z')
+   * the date must be utc timezone(date end with 'Z'),otherwise there will cause 412 precondition
+   * failed.
    *
    * @param beginDate
    * @param endDate
@@ -194,19 +210,16 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
       throw new CalDAV4JException(e.getMessage());
     }
 
-    // TODO EMAIL isn't a standard parameter,so ical4j-extension is necessary
     List<VEvent> events = new ArrayList<>();
     for (MultiStatusResponse statusResponse : multiStatusResponses) {
-      //      String etag = CalendarDataProperty.getEtagfromResponse(statusResponse);
       CalDAVResource calDAVResource = new CalDAVResource(statusResponse);
-      //      events.add((VEvent) (calDAVResource.getCalendar().getComponent(VEVENT)));
+      events.add((VEvent) (calDAVResource.getCalendar().getComponent(VEVENT)));
     }
     return events;
   }
 
   /**
-   * TODO [bug] here use the url to locate the calendar resource,but getCollectionRoot() is Override
-   *
+   * get event from icloud server with specified uuid
    * @param uuid
    * @return
    * @throws CalDAV4JException
@@ -218,7 +231,7 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
   }
 
   /**
-   * Add a event to server
+   * [TODO] need test Add a event to server
    *
    * @param event
    * @throws CalDAV4JException
@@ -252,12 +265,6 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
     String pathToDelete = this.calFolderPath + uuid + ".ics";
     delete(this.httpClient, pathToDelete);
     eventsMap.remove(uuid);
-  }
-
-  // fix some problems of CalDAV4j
-  @Override
-  public String getCalendarCollectionRoot() {
-    return this.calFolderPath;
   }
 
   // getter and setter

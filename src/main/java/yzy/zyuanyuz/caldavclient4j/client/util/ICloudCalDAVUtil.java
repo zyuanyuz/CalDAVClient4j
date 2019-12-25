@@ -62,6 +62,7 @@ public final class ICloudCalDAVUtil {
   }
 
   /**
+   * If use JDK 11+ this may cause SSLException
    * @param appleId
    * @param password
    * @return
