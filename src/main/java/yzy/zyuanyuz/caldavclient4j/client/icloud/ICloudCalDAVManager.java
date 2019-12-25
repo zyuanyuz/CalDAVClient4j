@@ -9,9 +9,6 @@ import com.github.caldav4j.model.request.*;
 import com.github.caldav4j.model.response.CalendarDataProperty;
 import com.github.caldav4j.util.CalDAVStatus;
 import com.github.caldav4j.util.ICalendarUtils;
-import net.fortuna.ical4j.data.CalendarBuilder;
-import net.fortuna.ical4j.data.CalendarParserFactory;
-import net.fortuna.ical4j.extensions.parameter.Email;
 import net.fortuna.ical4j.model.Calendar;
 import net.fortuna.ical4j.model.Date;
 import net.fortuna.ical4j.model.*;
@@ -196,9 +193,12 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
     eventFilter.setTimeRange(new TimeRange(beginDate, endDate));
     calendarFilter.addCompFilter(eventFilter);
 
+    CalendarData calendarData = new CalendarData();
+    calendarData.setRecurrenceSetStart(beginDate);
+    calendarData.setRecurrenceSetEnd(endDate);
+    //can'st get all recurrence events is the time range
     CalendarQuery query =
-        new CalendarQuery(properties, calendarFilter, new CalendarData(), false, false);
-    // System.out.println(XMLUtils.toPrettyXML(query.createNewDocument()));
+        new CalendarQuery(properties, calendarFilter, calendarData, false, false);
     MultiStatusResponse[] multiStatusResponses;
     try {
       HttpCalDAVReportMethod reportMethod =
