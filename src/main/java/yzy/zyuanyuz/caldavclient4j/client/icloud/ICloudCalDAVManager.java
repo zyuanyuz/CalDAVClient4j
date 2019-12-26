@@ -49,7 +49,7 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
   private String calFolderPath; /*resource url*/
 
   private static final ICloudCalendarDataProperty iCloudCalendarDataProperty =
-      new ICloudCalendarDataProperty();/*used to invoke the static code*/
+      new ICloudCalendarDataProperty(); /*used to invoke the static code*/
 
   public ICloudCalDAVManager(String appleId, String password, String calName) throws Exception {
     super.setMethodFactory(new CalDAV4JMethodFactory());
@@ -203,8 +203,9 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
     logger.info(XMLUtils.prettyPrint(query));
 
     MultiStatusResponse[] multiStatusResponses;
+    HttpCalDAVReportMethod reportMethod;
     try {
-      HttpCalDAVReportMethod reportMethod =
+      reportMethod =
           methodFactory.createCalDAVReportMethod(
               this.calFolderPath, query, CalDAVConstants.DEPTH_1);
       HttpResponse response = httpClient.execute(reportMethod);
@@ -216,6 +217,7 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
 
     List<VEvent> events = new ArrayList<>();
     for (MultiStatusResponse statusResponse : multiStatusResponses) {
+
       CalDAVResource calDAVResource = new CalDAVResource(statusResponse);
       events.add((VEvent) (calDAVResource.getCalendar().getComponent(VEVENT)));
     }
