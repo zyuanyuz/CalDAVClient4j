@@ -10,15 +10,11 @@ import com.github.caldav4j.model.response.CalendarDataProperty;
 import com.github.caldav4j.util.CalDAVStatus;
 import com.github.caldav4j.util.ICalendarUtils;
 import com.github.caldav4j.util.XMLUtils;
-import net.fortuna.ical4j.data.CalendarBuilder;
-import net.fortuna.ical4j.data.CalendarParserFactory;
-import net.fortuna.ical4j.extensions.parameter.Email;
 import net.fortuna.ical4j.model.Calendar;
 import net.fortuna.ical4j.model.Date;
 import net.fortuna.ical4j.model.*;
 import net.fortuna.ical4j.model.component.VEvent;
 import org.apache.http.HttpResponse;
-import org.apache.http.util.EntityUtils;
 import org.apache.jackrabbit.webdav.MultiStatusResponse;
 import org.apache.jackrabbit.webdav.property.DavPropertyName;
 import org.apache.jackrabbit.webdav.property.DavPropertyNameSet;
@@ -205,6 +201,7 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
 
     CalendarQuery query = new CalendarQuery(properties, calendarFilter, calendarData, false, false);
     logger.info(XMLUtils.prettyPrint(query));
+    
     MultiStatusResponse[] multiStatusResponses;
     try {
       HttpCalDAVReportMethod reportMethod =
