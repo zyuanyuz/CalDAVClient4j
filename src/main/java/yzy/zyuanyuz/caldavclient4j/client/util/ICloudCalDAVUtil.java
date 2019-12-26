@@ -27,6 +27,7 @@ import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.util.EntityUtils;
 import org.apache.jackrabbit.webdav.DavException;
 import org.apache.jackrabbit.webdav.MultiStatusResponse;
+import org.apache.jackrabbit.webdav.observation.ObservationConstants;
 import org.apache.jackrabbit.webdav.property.DavPropertyName;
 import org.apache.jackrabbit.webdav.property.DavPropertyNameSet;
 import org.w3c.dom.Document;
@@ -63,6 +64,7 @@ public final class ICloudCalDAVUtil {
 
   /**
    * If use JDK 11+ this may cause SSLException
+   *
    * @param appleId
    * @param password
    * @return
@@ -134,11 +136,12 @@ public final class ICloudCalDAVUtil {
     calendarFilter.addCompFilter(new CompFilter(Component.VEVENT));
 
     CalendarQuery query = new CalendarQuery(properties, calendarFilter, null, false, false);
+    //System.out.println(XMLUtils.prettyPrint(query));
 
     HttpCalDAVReportMethod reportMethod =
         methodFactory.createCalDAVReportMethod(url, query, CalDAVConstants.DEPTH_1);
     HttpResponse response = httpClient.execute(reportMethod);
-    //System.out.println(EntityUtils.toString(response.getEntity()));
+    System.out.println(EntityUtils.toString(response.getEntity()));
     return null;
     //    MultiStatus multiStatus = reportMethod.getResponseBodyAsMultiStatus(response);
     //    MultiStatusResponse[] multiStatusResponses = multiStatus.getResponses();
@@ -149,10 +152,15 @@ public final class ICloudCalDAVUtil {
     //        .collect(Collectors.toList());
   }
 
-
-
   public static String pathToCalendar(String principal, String calFolder, String uuid) {
-    return ICLOUD_CALDAV_HOST_PORT + "/" + principal + "/calendars/" + calFolder + "/" + uuid + ".ics";
+    return ICLOUD_CALDAV_HOST_PORT
+        + "/"
+        + principal
+        + "/calendars/"
+        + calFolder
+        + "/"
+        + uuid
+        + ".ics";
   }
 
   public static String getUidFromHref(String href) {
@@ -161,6 +169,7 @@ public final class ICloudCalDAVUtil {
 
   /**
    * for iCloud event from calendar
+   *
    * @param calendars
    * @return
    */

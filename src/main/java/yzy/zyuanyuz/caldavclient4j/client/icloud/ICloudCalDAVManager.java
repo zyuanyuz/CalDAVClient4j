@@ -9,6 +9,7 @@ import com.github.caldav4j.model.request.*;
 import com.github.caldav4j.model.response.CalendarDataProperty;
 import com.github.caldav4j.util.CalDAVStatus;
 import com.github.caldav4j.util.ICalendarUtils;
+import com.github.caldav4j.util.XMLUtils;
 import net.fortuna.ical4j.data.CalendarBuilder;
 import net.fortuna.ical4j.data.CalendarParserFactory;
 import net.fortuna.ical4j.extensions.parameter.Email;
@@ -17,6 +18,7 @@ import net.fortuna.ical4j.model.Date;
 import net.fortuna.ical4j.model.*;
 import net.fortuna.ical4j.model.component.VEvent;
 import org.apache.http.HttpResponse;
+import org.apache.http.util.EntityUtils;
 import org.apache.jackrabbit.webdav.MultiStatusResponse;
 import org.apache.jackrabbit.webdav.property.DavPropertyName;
 import org.apache.jackrabbit.webdav.property.DavPropertyNameSet;
@@ -49,6 +51,9 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
   private Map<String /*event uuid*/, EventEntry> eventsMap;
 
   private String calFolderPath; /*resource url*/
+
+  private static final ICloudCalendarDataProperty iCloudCalendarDataProperty =
+      new ICloudCalendarDataProperty();/*used to invoke the static code*/
 
   public ICloudCalDAVManager(String appleId, String password, String calName) throws Exception {
     super.setMethodFactory(new CalDAV4JMethodFactory());
@@ -196,15 +201,17 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
     eventFilter.setTimeRange(new TimeRange(beginDate, endDate));
     calendarFilter.addCompFilter(eventFilter);
 
-    CalendarQuery query =
-        new CalendarQuery(properties, calendarFilter, new CalendarData(), false, false);
-    // System.out.println(XMLUtils.toPrettyXML(query.createNewDocument()));
+    CalendarData calendarData = new CalendarData(CalendarData.EXPAND, beginDate, endDate, null);
+
+    CalendarQuery query = new CalendarQuery(properties, calendarFilter, calendarData, false, false);
+    logger.info(XMLUtils.prettyPrint(query));
     MultiStatusResponse[] multiStatusResponses;
     try {
       HttpCalDAVReportMethod reportMethod =
           methodFactory.createCalDAVReportMethod(
               this.calFolderPath, query, CalDAVConstants.DEPTH_1);
       HttpResponse response = httpClient.execute(reportMethod);
+      // logger.info(EntityUtils.toString(response.getEntity()));
       multiStatusResponses = reportMethod.getResponseBodyAsMultiStatus(response).getResponses();
     } catch (Exception e) {
       throw new CalDAV4JException(e.getMessage());
@@ -220,6 +227,7 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
 
   /**
    * get event from icloud server with specified uuid
+   *
    * @param uuid
    * @return
    * @throws CalDAV4JException
@@ -254,7 +262,6 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
     return ICalendarUtils.getUIDValue(event);
   }
 
-  // TODO path need test
   /**
    * delete event from server and local cached map with event uuid
    *
