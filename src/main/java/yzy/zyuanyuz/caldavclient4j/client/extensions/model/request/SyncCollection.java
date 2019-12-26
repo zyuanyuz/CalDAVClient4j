@@ -29,7 +29,7 @@ public class SyncCollection extends OutputsDOMBase implements CalDAVReportReques
   protected Namespace getNamespace() {
     return CalDAVConstants.NAMESPACE_CALDAV;
   }
-  
+
   @Override
   protected Collection<? extends XmlSerializable> getChildren() {
     return null;  //do nothing
