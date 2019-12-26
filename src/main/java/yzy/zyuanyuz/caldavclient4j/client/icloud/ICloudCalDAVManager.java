@@ -201,7 +201,7 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
 
     CalendarQuery query = new CalendarQuery(properties, calendarFilter, calendarData, false, false);
     logger.info(XMLUtils.prettyPrint(query));
-    
+
     MultiStatusResponse[] multiStatusResponses;
     try {
       HttpCalDAVReportMethod reportMethod =
