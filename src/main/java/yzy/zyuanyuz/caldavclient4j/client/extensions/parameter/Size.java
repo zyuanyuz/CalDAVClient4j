@@ -6,8 +6,6 @@ import net.fortuna.ical4j.model.ParameterFactory;
 
 /**
  * <pre>
- * https://tools.ietf.org/html/draft-ietf-calext-caldav-attachments-04#page-18
- *
  * Parameter Name:  SIZE
  *
  *    Purpose:  Provide filename for attachments specified with {@link net.fortuna.ical4j.model.property.Attach}.
@@ -32,7 +30,7 @@ import net.fortuna.ical4j.model.ParameterFactory;
  *
  * @author George.Yu
  * @since 2019/12/26 10:37
- *
+ * @see <a href="https://tools.ietf.org/html/draft-ietf-calext-caldav-attachments-04#page-18"/>
  */
 public class Size extends Parameter {
 

@@ -6,8 +6,6 @@ import net.fortuna.ical4j.model.ParameterFactory;
 
 
 /**
- * https://tools.ietf.org/html/draft-ietf-calext-caldav-attachments-04#page-19
- *
  * <pre>
  *     Parameter Name:  MANAGED-ID
  *
@@ -33,6 +31,7 @@ import net.fortuna.ical4j.model.ParameterFactory;
  *
  * @author George.Yu
  * @since 2019/12/26 12:38
+ * @see <a href="https://tools.ietf.org/html/draft-ietf-calext-caldav-attachments-04#page-19"/>
  */
 public class ManagedID extends Parameter {
     private static final long serialVersionUID = 1L;
