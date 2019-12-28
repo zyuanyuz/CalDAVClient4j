@@ -2,8 +2,10 @@ package yzy.zyuanyuz.caldavclient4j.client;
 
 /**
  * @author zyuanyuz
- * @since 2019/10/19 22:43
+ * @since 2019/12/28 22:34
  */
-public interface CalDAVClient {
+
+public abstract class AbstractCalDAVCalendar {
+
 
 }

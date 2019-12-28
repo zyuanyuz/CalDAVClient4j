@@ -16,14 +16,11 @@ repositories {
 }
 
 dependencies {
-    // https://mvnrepository.com/artifact/com.github.caldav4j/caldav4j
     compile ('com.github.caldav4j:caldav4j:1.0.0-rc.2')
-    // https://mvnrepository.com/artifact/org.mnode.ical4j/ical4j-extensions
     compile ('org.mnode.ical4j:ical4j-extensions:1.0.3')
     {
         exclude group: 'javax.mail', module: 'javax.mail-api'
     }
-    // https://mvnrepository.com/artifact/com.sun.mail/javax.mail
     compile ('com.sun.mail:javax.mail:1.6.2')
     compile ('org.ehcache:ehcache:3.8.1')
     compile ('javax.cache:cache-api:1.1.1')
