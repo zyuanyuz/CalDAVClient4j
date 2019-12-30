@@ -6,15 +6,18 @@ import com.github.caldav4j.model.request.CalendarData;
 import com.github.caldav4j.util.XMLUtils;
 import net.fortuna.ical4j.model.component.VEvent;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
 import org.apache.http.util.EntityUtils;
+import org.apache.jackrabbit.webdav.property.DavPropertyName;
+import org.apache.jackrabbit.webdav.property.DavPropertyNameSet;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import yzy.zyuanyuz.caldavclient4j.client.extensions.model.request.SyncCollection;
 import yzy.zyuanyuz.caldavclient4j.client.icloud.ICloudCalDAVManager;
-import yzy.zyuanyuz.caldavclient4j.client.util.ICloudCalDAVUtil;
+import yzy.zyuanyuz.caldavclient4j.client.util.ICloudCalendarUtil;
+
+import static yzy.zyuanyuz.caldavclient4j.client.extensions.model.request.SyncCollection.PARAM_SYNC_LEVEL_ONE;
 
 /**
  * @author George Yu
@@ -35,7 +38,7 @@ public class ICloudController {
   @GetMapping("/resource")
   public void getResource() throws Exception {
     System.out.println(
-        ICloudCalDAVUtil.getAllResourceFromServer(
+        ICloudCalendarUtil.getAllResourceFromServer(
             iCloudCalDAVManager.getHttpClient(),
             iCloudCalDAVManager.getMethodFactory(),
             iCloudCalDAVManager.getPrincipal()));
@@ -48,7 +51,7 @@ public class ICloudController {
 
   @GetMapping("/refresh")
   public void refreshEvents() throws Exception {
-    ICloudCalDAVUtil.getEventUidList(
+    ICloudCalendarUtil.getEventUidList(
         "28C804FE-B39D-4CFD-B09D-0EAA4DB4E7BB",
         iCloudCalDAVManager.getHttpClient(),
         iCloudCalDAVManager.getMethodFactory());
@@ -56,9 +59,11 @@ public class ICloudController {
 
   @GetMapping("/sync")
   public void getSyncCollectionRequest() throws Exception {
-    SyncCollection syncCollection = new SyncCollection(null,"1",null);
-    //SyncCollection syncCollection =
-    //    new SyncCollection("FT=-@RU=cbff5e64-052c-4025-a68d-e9b07e0a2efe@S=69", "1", null);
+    DavPropertyNameSet davPropertySet = new DavPropertyNameSet();
+    davPropertySet.add(DavPropertyName.GETETAG);
+    SyncCollection syncCollection =
+        new SyncCollection(
+            davPropertySet,"FT=-@RU=cbff5e64-052c-4025-a68d-e9b07e0a2efe@S=69", PARAM_SYNC_LEVEL_ONE, null, new CalendarData());
     System.out.println(XMLUtils.prettyPrint(syncCollection));
     HttpCalDAVReportMethod reportMethod =
         iCloudCalDAVManager

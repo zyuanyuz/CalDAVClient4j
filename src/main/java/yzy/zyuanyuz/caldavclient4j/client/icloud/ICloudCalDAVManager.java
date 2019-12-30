@@ -22,7 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import yzy.zyuanyuz.caldavclient4j.client.AbstractCalDAVManager;
 import yzy.zyuanyuz.caldavclient4j.client.commons.EventEntry;
-import yzy.zyuanyuz.caldavclient4j.client.util.ICloudCalDAVUtil;
+import yzy.zyuanyuz.caldavclient4j.client.util.ICloudCalendarUtil;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -55,8 +55,8 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
     super.setMethodFactory(new CalDAV4JMethodFactory());
     this.calName = calName;
     this.eventsMap = new ConcurrentHashMap<>();
-    this.httpClient = ICloudCalDAVUtil.createHttpClient(appleId, password);
-    this.principal = ICloudCalDAVUtil.getPrincipalId(this.httpClient, this.methodFactory);
+    this.httpClient = ICloudCalendarUtil.createHttpClient(appleId, password);
+    this.principal = ICloudCalendarUtil.getPrincipalId(this.httpClient, this.methodFactory);
     this.calFolderPath = ICLOUD_CALDAV_HOST + this.principal + "/calendars/" + this.calName + "/";
     this.setCalendarCollectionRoot(this.calFolderPath);
   }
@@ -68,7 +68,7 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
    * @return
    */
   public String getETagFromServer(String uuid) throws CalDAV4JException {
-    String pathGetETag = ICloudCalDAVUtil.pathToCalendar(this.principal, this.calName, uuid);
+    String pathGetETag = ICloudCalendarUtil.pathToCalendar(this.principal, this.calName, uuid);
     return getETagbyMultiget(this.httpClient, pathGetETag);
   }
 
@@ -145,7 +145,7 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
   public List<VEvent> multiGetEventsFromServer(List<String> uuidList) throws Exception {
     List<String> urls =
         uuidList.stream()
-            .map(uuid -> ICloudCalDAVUtil.pathToCalendar(this.principal, this.calName, uuid))
+            .map(uuid -> ICloudCalendarUtil.pathToCalendar(this.principal, this.calName, uuid))
             .collect(toList());
 
     return multigetCalendarUris(this.httpClient, urls).stream()
@@ -194,10 +194,10 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
 
     CompFilter calendarFilter = new CompFilter(VCALENDAR);
     CompFilter eventFilter = new CompFilter(Component.VEVENT);
-    eventFilter.setTimeRange(new TimeRange(beginDate, endDate));
+    eventFilter.setTimeRange(new TimeRange(beginDate, null));
     calendarFilter.addCompFilter(eventFilter);
 
-    CalendarData calendarData = new CalendarData(CalendarData.LIMIT, beginDate,endDate, null);
+    CalendarData calendarData = new CalendarData(CalendarData.LIMIT, beginDate,beginDate, null);
 
     CalendarQuery query = new CalendarQuery(properties, calendarFilter, calendarData, false, false);
     logger.info(XMLUtils.prettyPrint(query));

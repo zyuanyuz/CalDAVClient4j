@@ -3,6 +3,7 @@ package yzy.zyuanyuz.caldavclient4j.client.extensions.model.request;
 import com.github.caldav4j.CalDAVConstants;
 import com.github.caldav4j.exceptions.DOMValidationException;
 import com.github.caldav4j.model.request.CalDAVReportRequest;
+import com.github.caldav4j.model.request.CalendarData;
 import com.github.caldav4j.model.request.Prop;
 import com.github.caldav4j.xml.OutputsDOMBase;
 import org.apache.jackrabbit.webdav.property.DavPropertyNameSet;
@@ -25,7 +26,7 @@ public class SyncCollection extends OutputsDOMBase implements CalDAVReportReques
   public static final String ELEMENT_NAME = "sync-collection";
   public static final String ELEM_SYNC_TOKEN = "sync-token";
   public static final String ELEM_SYNC_LEVEL = "sync-level";
-  public static final String ELEM_LIMIT = "limit"; // TODO this time don't care the parameter
+  public static final String ELEM_LIMIT = "limit";
 
   public static final String PARAM_SYNC_LEVEL_ONE = "1";
   public static final String PARAM_SYNC_LEVEL_INFINITE = "infinite";
@@ -35,20 +36,26 @@ public class SyncCollection extends OutputsDOMBase implements CalDAVReportReques
   private Limit limit = null;
 
   private Prop properties = new Prop();
+  private CalendarData calendarData = new CalendarData();
 
   public SyncCollection() {}
 
   @SuppressWarnings("unchecked")
-  public SyncCollection(Prop properties, String syncToken, String syncLevel, Limit limit) {
-    this(syncToken, syncLevel, limit);
+  public SyncCollection(
+      Prop properties, String syncToken, String syncLevel, Limit limit, CalendarData calendarData) {
+    this(syncToken, syncLevel, limit, calendarData);
     if (properties != null) {
       this.properties.addChildren(properties);
     }
   }
 
   public SyncCollection(
-      DavPropertyNameSet properties, String syncToken, String syncLevel, Limit limit) {
-    this(syncToken, syncLevel, limit);
+      DavPropertyNameSet properties,
+      String syncToken,
+      String syncLevel,
+      Limit limit,
+      CalendarData calendarData) {
+    this(syncToken, syncLevel, limit, calendarData);
     if (properties != null) {
       this.properties.addChildren(properties);
     }
@@ -58,8 +65,9 @@ public class SyncCollection extends OutputsDOMBase implements CalDAVReportReques
       Collection<? extends XmlSerializable> properties,
       String syncToken,
       String syncLevel,
-      Limit limit) {
-    this(syncToken, syncLevel, limit);
+      Limit limit,
+      CalendarData calendarData) {
+    this(syncToken, syncLevel, limit, calendarData);
     if (properties != null) {
       this.properties.addChildren(properties);
     }
@@ -69,6 +77,14 @@ public class SyncCollection extends OutputsDOMBase implements CalDAVReportReques
     this.syncToken = syncToken;
     this.syncLevel = syncLevel;
     this.limit = limit;
+  }
+
+  public SyncCollection(
+      String syncToken, String syncLevel, Limit limit, CalendarData calendarData) {
+    this.syncToken = syncToken;
+    this.syncLevel = syncLevel;
+    this.limit = limit;
+    this.calendarData = calendarData;
   }
 
   /** {@inheritDoc} */
@@ -92,11 +108,14 @@ public class SyncCollection extends OutputsDOMBase implements CalDAVReportReques
             ELEM_SYNC_TOKEN, this.syncToken, CalDAVConstants.NAMESPACE_WEBDAV));
     children.add(
         new DefaultDavProperty<String>(
-            ELEM_SYNC_LEVEL, this.syncLevel, CalDAVConstants.NAMESPACE_WEBDAV));
+            ELEM_SYNC_LEVEL,
+            null == this.syncLevel ? "1" : this.syncLevel,   // if not set the syncLevel,set a default value "1"
+            CalDAVConstants.NAMESPACE_WEBDAV));
     if (this.limit != null) children.add(this.limit);
-    if (this.properties != null && !this.properties.isEmpty()) {
+    if ((this.properties != null && !this.properties.isEmpty()) || this.calendarData != null) {
       Prop tmp = new Prop();
       tmp.addChildren(this.properties.getChildren());
+      if (this.calendarData != null) tmp.addChild(this.calendarData);
       children.add(tmp);
     }
     return children;
@@ -116,14 +135,15 @@ public class SyncCollection extends OutputsDOMBase implements CalDAVReportReques
 
   /**
    * validate the
+   *
    * @throws DOMValidationException
    */
   @Override
   public void validate() throws DOMValidationException {
-    // TODO validate some required parameters,sync token must be null or URI(how to detect this)
-    if (syncLevel == null || !syncLevel.matches("1|infinite")) {
-      throw new DOMValidationException("sync-level is required and must be 1 or infinite");
-    }
+
+    //    if (syncLevel == null || !syncLevel.matches("1|infinite")) {
+    //      throw new DOMValidationException("sync-level is required and must be 1 or infinite");
+    //    }
   }
 
   // getter and setter

@@ -31,6 +31,7 @@ import org.w3c.dom.Document;
 import yzy.zyuanyuz.caldavclient4j.client.commons.ResourceEntry;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -43,18 +44,23 @@ import static yzy.zyuanyuz.caldavclient4j.client.commons.ICloudCalDAVConstants.I
  * @author George Yu
  * @since 2019/10/9 10:43
  */
-public final class ICloudCalDAVUtil {
+public final class ICloudCalendarUtil {
 
-  private ICloudCalDAVUtil() {}
+  private ICloudCalendarUtil() {}
 
   public static String getPrincipalId(HttpClient httpClient, CalDAV4JMethodFactory methodFactory)
-      throws Exception {
+      throws CalDAV4JException {
     DavPropertyNameSet nameSet = new DavPropertyNameSet();
     nameSet.add(DavPropertyName.create(CURRENT_USER_PRINCIPAL_STR));
-    HttpPropFindMethod propFindMethod =
-        methodFactory.createPropFindMethod(ICLOUD_CALDAV_HOST_PORT, nameSet, 0);
-    HttpResponse response = httpClient.execute(propFindMethod);
-    Document doc = propFindMethod.getResponseBodyAsDocument(response.getEntity());
+    Document doc;
+    try{
+      HttpPropFindMethod propFindMethod =
+              methodFactory.createPropFindMethod(ICLOUD_CALDAV_HOST_PORT, nameSet, 0);
+      HttpResponse response = httpClient.execute(propFindMethod);
+      doc = propFindMethod.getResponseBodyAsDocument(response.getEntity());
+    }catch(Exception e){
+      throw new CalDAV4JException("Get PrincipalId failed with :"+ e.getCause());
+    }
     String href = doc.getElementsByTagName("href").item(1).getFirstChild().getNodeValue();
     return href.substring(1, href.indexOf("/principal/"));
   }
@@ -81,7 +87,7 @@ public final class ICloudCalDAVUtil {
           .setDefaultCredentialsProvider(provider)
           .build();
     } catch (Exception e) {
-      throw new CalDAV4JException("Build http client failed!");
+      throw new CalDAV4JException("Build http client failed! May appleId or password not right");
     }
   }
 
@@ -94,15 +100,25 @@ public final class ICloudCalDAVUtil {
    */
   public static List<ResourceEntry> getAllResourceFromServer(
       HttpClient httpClient, CalDAV4JMethodFactory methodFactory, String principalId)
-      throws IOException, DavException {
+      throws CalDAV4JException {
     String url = ICLOUD_CALDAV_HOST_PORT + principalId + "/calendars";
     DavPropertyNameSet propertyNameSet = new DavPropertyNameSet();
     propertyNameSet.add(DISPLAYNAME);
-    HttpPropFindMethod propFindMethod = methodFactory.createPropFindMethod(url, propertyNameSet, 1);
-    MultiStatusResponse[] multiStatusResponses =
-        propFindMethod
-            .getResponseBodyAsMultiStatus(httpClient.execute(propFindMethod))
-            .getResponses();
+    MultiStatusResponse[] multiStatusResponses = null;
+    try {
+      HttpPropFindMethod propFindMethod =
+          methodFactory.createPropFindMethod(url, propertyNameSet, 1);
+      multiStatusResponses =
+          propFindMethod
+              .getResponseBodyAsMultiStatus(httpClient.execute(propFindMethod))
+              .getResponses();
+    } catch (Exception e) {
+      throw new CalDAV4JException(
+          "Get all resource from server failed with exception:" + e.getCause());
+    }
+    if (null == multiStatusResponses) {
+      return new ArrayList<>();
+    }
     return Arrays.stream(multiStatusResponses)
         .filter(res -> null != res.getProperties(CalDAVStatus.SC_OK).get(DISPLAYNAME))
         .map(
@@ -133,7 +149,7 @@ public final class ICloudCalDAVUtil {
     calendarFilter.addCompFilter(new CompFilter(Component.VEVENT));
 
     CalendarQuery query = new CalendarQuery(properties, calendarFilter, null, false, false);
-    //System.out.println(XMLUtils.prettyPrint(query));
+    // System.out.println(XMLUtils.prettyPrint(query));
 
     HttpCalDAVReportMethod reportMethod =
         methodFactory.createCalDAVReportMethod(url, query, CalDAVConstants.DEPTH_1);
