@@ -72,7 +72,6 @@ public class ICloudCalendar {
 
       private static final String REST_PATH = "{principalId}/calendars/{resourceId}/{eventId}.ics";
 
-
       private String resourceId;
 
       List(String resourceId) {
@@ -194,6 +193,12 @@ public class ICloudCalendar {
 
       public java.util.List<VEvent> execute() {
         // TODO execute the method
+        if(null!=syncCollectionReport){
+
+        }
+        if(null != calendarQueryReport){
+
+        }
 
         return null;
       }
