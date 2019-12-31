@@ -7,10 +7,13 @@ import com.github.caldav4j.methods.HttpCalDAVReportMethod;
 import com.github.caldav4j.methods.HttpPropFindMethod;
 import com.github.caldav4j.model.request.CalendarQuery;
 import com.github.caldav4j.model.request.CompFilter;
+import com.github.caldav4j.model.response.CalendarDataProperty;
 import com.github.caldav4j.util.CalDAVStatus;
 import net.fortuna.ical4j.model.Calendar;
 import net.fortuna.ical4j.model.Component;
 import net.fortuna.ical4j.model.component.VEvent;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
@@ -24,6 +27,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.util.EntityUtils;
 import org.apache.jackrabbit.webdav.DavException;
+import org.apache.jackrabbit.webdav.MultiStatus;
 import org.apache.jackrabbit.webdav.MultiStatusResponse;
 import org.apache.jackrabbit.webdav.property.DavPropertyName;
 import org.apache.jackrabbit.webdav.property.DavPropertyNameSet;
@@ -34,8 +38,13 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static net.fortuna.ical4j.model.Component.VEVENT;
+import static org.apache.http.HttpStatus.SC_NOT_FOUND;
+import static org.apache.http.HttpStatus.SC_OK;
 import static org.apache.jackrabbit.webdav.property.DavPropertyName.DISPLAYNAME;
 import static yzy.zyuanyuz.caldavclient4j.client.commons.ICloudCalDAVConstants.CURRENT_USER_PRINCIPAL_STR;
 import static yzy.zyuanyuz.caldavclient4j.client.commons.ICloudCalDAVConstants.ICLOUD_CALDAV_HOST_PORT;
@@ -53,13 +62,13 @@ public final class ICloudCalendarUtil {
     DavPropertyNameSet nameSet = new DavPropertyNameSet();
     nameSet.add(DavPropertyName.create(CURRENT_USER_PRINCIPAL_STR));
     Document doc;
-    try{
+    try {
       HttpPropFindMethod propFindMethod =
-              methodFactory.createPropFindMethod(ICLOUD_CALDAV_HOST_PORT, nameSet, 0);
+          methodFactory.createPropFindMethod(ICLOUD_CALDAV_HOST_PORT, nameSet, 0);
       HttpResponse response = httpClient.execute(propFindMethod);
       doc = propFindMethod.getResponseBodyAsDocument(response.getEntity());
-    }catch(Exception e){
-      throw new CalDAV4JException("Get PrincipalId failed with :"+ e.getCause());
+    } catch (Exception e) {
+      throw new CalDAV4JException("Get PrincipalId failed with :" + e.getCause());
     }
     String href = doc.getElementsByTagName("href").item(1).getFirstChild().getNodeValue();
     return href.substring(1, href.indexOf("/principal/"));
@@ -130,47 +139,49 @@ public final class ICloudCalendarUtil {
   }
 
   /**
-   * @param resourceName
-   * @param httpClient
-   * @param methodFactory
-   * @return
-   * @throws Exception
+   * handle the sync collection response
+   *
+   * @param multiStatus
+   * @return Triple<List<String> eventsHrefToMGet, List<String> eventUidDeletedFromServer, String
+   *     nextSyncToken>
    */
-  public static List<String> getEventUidList(
-      String resourceName, HttpClient httpClient, CalDAV4JMethodFactory methodFactory)
-      throws Exception {
-    String principalId = getPrincipalId(httpClient, methodFactory); // e.g. 16884482682
-    String url = ICLOUD_CALDAV_HOST_PORT + principalId + "/calendars/" + resourceName;
+  public static Triple<List<String>, List<String>, String> getSyncHrefsAndToDel(
+      MultiStatus multiStatus) {
+    MultiStatusResponse[] multiStatusResponses = multiStatus.getResponses();
 
-    DavPropertyNameSet properties = new DavPropertyNameSet();
-    properties.add(DavPropertyName.GETETAG);
+    List<String> hrefsToMGet = new ArrayList<>();
+    List<String> uidToDel = new ArrayList<>();
+    String nextSyncToken = multiStatus.getResponseDescription(); // TODO [bug] how get the next syncToken?
 
-    CompFilter calendarFilter = new CompFilter(Calendar.VCALENDAR);
-    calendarFilter.addCompFilter(new CompFilter(Component.VEVENT));
-
-    CalendarQuery query = new CalendarQuery(properties, calendarFilter, null, false, false);
-    // System.out.println(XMLUtils.prettyPrint(query));
-
-    HttpCalDAVReportMethod reportMethod =
-        methodFactory.createCalDAVReportMethod(url, query, CalDAVConstants.DEPTH_1);
-    HttpResponse response = httpClient.execute(reportMethod);
-    System.out.println(EntityUtils.toString(response.getEntity()));
-    return null;
-    //    MultiStatus multiStatus = reportMethod.getResponseBodyAsMultiStatus(response);
-    //    MultiStatusResponse[] multiStatusResponses = multiStatus.getResponses();
-    //    return Arrays.stream(multiStatusResponses)
-    //        .skip(1)
-    //        .map(MultiStatusResponse::getHref)
-    //        .map(href -> href.substring(href.indexOf(resourceName) + resourceName.length()))
-    //        .collect(Collectors.toList());
+    for (int i = 1; i < multiStatusResponses.length; i++) {
+      if (null != multiStatusResponses[i].getProperties(SC_OK)) {
+        hrefsToMGet.add(multiStatusResponses[i].getHref());
+      }
+      if (null != multiStatusResponses[i].getProperties(SC_NOT_FOUND)) {
+        uidToDel.add(getUidFromHref(multiStatusResponses[i].getHref()));
+      }
+    }
+    return Triple.of(hrefsToMGet, uidToDel, nextSyncToken);
   }
 
-  public static String pathToCalendar(String principal, String calFolder, String uuid) {
+  public static List<VEvent> getVEventFromMultiStatus(MultiStatus multiStatus) {
+    MultiStatusResponse[] multiStatusResponses = multiStatus.getResponses();
+    List<VEvent> eventList = new ArrayList<>();
+    for (int i = 1; i < multiStatusResponses.length; i++) { // skip one
+      eventList.add(
+          (VEvent)
+              CalendarDataProperty.getCalendarfromResponse(multiStatusResponses[i])
+                  .getComponent(VEVENT));
+    }
+    return eventList;
+  }
+
+  public static String pathToCalendarPath(String principalId, String resourceId, String uuid) {
     return ICLOUD_CALDAV_HOST_PORT
         + "/"
-        + principal
+        + principalId
         + "/calendars/"
-        + calFolder
+        + resourceId
         + "/"
         + uuid
         + ".ics";
@@ -188,7 +199,7 @@ public final class ICloudCalendarUtil {
    */
   public static List<VEvent> getEventsFromCalendars(List<Calendar> calendars) {
     return calendars.stream()
-        .flatMap(c -> c.getComponents(Component.VEVENT).stream())
+        .flatMap(c -> c.getComponents(VEVENT).stream())
         .map(e -> (VEvent) e)
         .collect(Collectors.toList());
   }

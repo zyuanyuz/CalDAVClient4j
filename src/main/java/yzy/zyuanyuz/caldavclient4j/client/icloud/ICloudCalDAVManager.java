@@ -68,7 +68,7 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
    * @return
    */
   public String getETagFromServer(String uuid) throws CalDAV4JException {
-    String pathGetETag = ICloudCalendarUtil.pathToCalendar(this.principal, this.calName, uuid);
+    String pathGetETag = ICloudCalendarUtil.pathToCalendarPath(this.principal, this.calName, uuid);
     return getETagbyMultiget(this.httpClient, pathGetETag);
   }
 
@@ -145,7 +145,7 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
   public List<VEvent> multiGetEventsFromServer(List<String> uuidList) throws Exception {
     List<String> urls =
         uuidList.stream()
-            .map(uuid -> ICloudCalendarUtil.pathToCalendar(this.principal, this.calName, uuid))
+            .map(uuid -> ICloudCalendarUtil.pathToCalendarPath(this.principal, this.calName, uuid))
             .collect(toList());
 
     return multigetCalendarUris(this.httpClient, urls).stream()
