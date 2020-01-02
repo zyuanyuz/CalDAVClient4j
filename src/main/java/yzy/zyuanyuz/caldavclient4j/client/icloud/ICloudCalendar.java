@@ -15,6 +15,7 @@ import yzy.zyuanyuz.caldavclient4j.client.extensions.model.request.SyncCollectio
 import yzy.zyuanyuz.caldavclient4j.client.util.ICloudCalendarUtil;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author zyuanyuz
@@ -61,11 +62,23 @@ public class ICloudCalendar {
   }
 
   public class IResource {
+
     public List list() {
       return new List();
     }
 
-    public class List {}
+    public class List {
+      private static final String REST_PATH = "{principalId}/calendars";
+
+      public IResource execute() {
+        try {
+          IResource.this.resourceEntries = ICloudCalendarUtil.getAllResourceFromServer(httpClient, methodFactory, principalId);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return IResource.this;
+      }
+    }
 
     private java.util.List<ResourceEntry> resourceEntries;
 
@@ -107,6 +120,12 @@ public class ICloudCalendar {
             : null;
       }
 
+      /**
+       * this function will change the reportRequest to SyncCollection report
+       *
+       * @param syncToken
+       * @return
+       */
       public List setSyncToken(String syncToken) {
         if (reportRequest instanceof SyncCollection) {
           ((SyncCollection) reportRequest).setSyncToken(syncToken);
@@ -122,8 +141,15 @@ public class ICloudCalendar {
         return startDateTime;
       }
 
+      /**
+       * this time should set as UTC time
+       *
+       * @param startDataTime
+       * @return
+       */
       public List setStartDateTime(DateTime startDataTime) {
         this.startDateTime = startDataTime;
+        this.startDateTime.setUtc(true);
         return this;
       }
 
@@ -135,6 +161,7 @@ public class ICloudCalendar {
 
       public List setEndDateTime(DateTime endDateTime) {
         this.endDateTime = endDateTime;
+        this.endDateTime.setUtc(true);
         return this;
       }
 
@@ -181,6 +208,10 @@ public class ICloudCalendar {
         return IEvent.this;
       }
 
+      /**
+       * this function will execute twice http request if SyncCollection report response return
+       * multi event hrefs.
+       */
       private void executeWithSyncToken() {
         String resourceUri = getBaseServiceURI() + resourceId + "/";
 
@@ -203,6 +234,7 @@ public class ICloudCalendar {
           uidToDel = triple.getMiddle();
           nextSyncToken = triple.getRight();
         } catch (Exception e) {
+          e.printStackTrace();
           IEvent.this.uidToDelete = new ArrayList<>();
           IEvent.this.eventItems = new ArrayList<>();
           return;
@@ -232,12 +264,14 @@ public class ICloudCalendar {
                 ICloudCalendarUtil.getVEventFromMultiStatus(
                     reportMethod.getResponseBodyAsMultiStatus(response));
           } catch (Exception e) {
+            e.printStackTrace();
             IEvent.this.eventItems = new ArrayList<>();
             return;
           }
         }
       }
 
+      /** */
       private void executeWithCalendarQuery() {
         String resourceUri = getBaseServiceURI() + resourceId + "/";
 
@@ -261,6 +295,7 @@ public class ICloudCalendar {
               ICloudCalendarUtil.getVEventFromMultiStatus(
                   reportMethod.getResponseBodyAsMultiStatus(response));
         } catch (Exception e) {
+          e.printStackTrace();
           IEvent.this.eventItems = new ArrayList<>();
           return;
         }
