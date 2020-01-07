@@ -15,7 +15,6 @@ import yzy.zyuanyuz.caldavclient4j.client.extensions.model.request.SyncCollectio
 import yzy.zyuanyuz.caldavclient4j.client.util.ICloudCalendarUtil;
 
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author zyuanyuz
@@ -333,6 +332,10 @@ public class ICloudCalendar {
     }
   }
 
+  public static Builder builder(){
+    return new Builder();
+  }
+
   /** ICloudCalendar builder */
   public static final class Builder {
     private String appleId;
@@ -399,6 +402,10 @@ public class ICloudCalendar {
       iCloudCalendar.setMethodFactory(methodFactory);
       iCloudCalendar.setPrincipalId(principalId);
       return iCloudCalendar;
+    }
+
+    private boolean validBuilder(){
+
     }
   }
 }

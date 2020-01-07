@@ -6,6 +6,7 @@ import net.fortuna.ical4j.model.property.Uid;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import yzy.zyuanyuz.caldavclient4j.client.CalDAVManager;
+import yzy.zyuanyuz.caldavclient4j.client.icloud.ICloudCalendar;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -75,8 +76,7 @@ public class ClientController {
 
   @GetMapping("/test")
   public void test() throws Exception {
-    CalDAVManager calDAVManager = new CalDAVManager();
-    calDAVManager.testSubscribe();
+    ICloudCalendar.builder().setAppleIdAndPwd().build();
   }
 
 }
