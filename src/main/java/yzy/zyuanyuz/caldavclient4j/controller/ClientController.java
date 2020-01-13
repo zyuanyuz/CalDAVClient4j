@@ -1,11 +1,13 @@
 package yzy.zyuanyuz.caldavclient4j.controller;
 
 import net.fortuna.ical4j.model.Calendar;
+import net.fortuna.ical4j.model.DateTime;
 import net.fortuna.ical4j.model.component.VEvent;
 import net.fortuna.ical4j.model.property.Uid;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import yzy.zyuanyuz.caldavclient4j.client.CalDAVManager;
+import yzy.zyuanyuz.caldavclient4j.client.icloud.ICloudCalDAVManager;
 import yzy.zyuanyuz.caldavclient4j.client.icloud.ICloudCalendar;
 
 import java.text.DateFormat;
@@ -18,16 +20,6 @@ import java.util.Date;
  */
 @RestController
 public class ClientController {
-  @GetMapping("/cal")
-  public String getCalendar() throws Exception {
-    CalDAVManager calDAVManager = new CalDAVManager();
-    Calendar cal =
-        calDAVManager.getCalendar(
-            calDAVManager.getHttpClient(), "/root/68ab2a13-ee99-31d8-5baa-4594545fcd36/");
-
-    return cal.toString();
-  }
-
   @GetMapping("/add")
   public String putEvent() throws Exception {
     CalDAVManager calDAVManager = new CalDAVManager();
@@ -46,11 +38,6 @@ public class ClientController {
     calDAVManager.add(calDAVManager.getHttpClient(), event, null);
     Calendar cal = calDAVManager.getCalendar(calDAVManager.getHttpClient(), "/");
     System.out.println("add a event : " + cal.toString());
-
-    //    calDAVManager.delete(calDAVManager.getHttpClient(), "VEVENT", uid.getValue());
-    //    cal = calDAVManager.getCalendar(calDAVManager.getHttpClient(), "/");
-    //    System.out.println("delete an exist event : " + cal.toString());
-
     return cal.toString();
   }
 
@@ -76,7 +63,29 @@ public class ClientController {
 
   @GetMapping("/test")
   public void test() throws Exception {
-    ICloudCalendar.builder().setAppleIdAndPwd().build();
+    ICloudCalendar calendar =
+        ICloudCalendar.builder()
+            .setAppleIdAndPwd("zyuanyuz@icloud.com", "ieix-obgf-gxmi-oiws")
+            .build();
+    DateTime startTime = new DateTime();
+    DateTime endTime = new DateTime(startTime.getTime() + 3 * 24 * 60 * 60 * 1000);
+    ICloudCalendar.IEvent event =
+        calendar
+            .iEvent()
+            .list("work")
+            .setSingleEvent(true)
+            .setSingleEventStartTime(startTime)
+            .setSingleEventEndDateTime(endTime)
+            .setDebugMode(true)
+            .setSyncToken(null)
+            .execute();
+    System.out.println(event.getEventItems());
   }
 
+  @GetMapping("/testManager")
+  public void testManager() throws Exception {
+    ICloudCalDAVManager manager =
+        new ICloudCalDAVManager("zyuanyuz@icloud.com", "ieix-obgf-gxmi-oiws", "work");
+    System.out.println(manager.getEventsForNDays(3));
+  }
 }

@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 import static java.util.stream.Collectors.toList;
 import static net.fortuna.ical4j.model.Calendar.VCALENDAR;
 import static net.fortuna.ical4j.model.Component.VEVENT;
-import static yzy.zyuanyuz.caldavclient4j.client.commons.ICloudCalDAVConstants.ICLOUD_CALDAV_HOST;
+import static yzy.zyuanyuz.caldavclient4j.client.commons.ICloudCalDAVConstants.ICLOUD_CALDAV_HOST_STR;
 
 /**
  * resource
@@ -57,7 +57,7 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
     this.eventsMap = new ConcurrentHashMap<>();
     this.httpClient = ICloudCalendarUtil.createHttpClient(appleId, password);
     this.principal = ICloudCalendarUtil.getPrincipalId(this.httpClient, this.methodFactory);
-    this.calFolderPath = ICLOUD_CALDAV_HOST + this.principal + "/calendars/" + this.calName + "/";
+    this.calFolderPath = ICLOUD_CALDAV_HOST_STR + this.principal + "/calendars/" + this.calName + "/";
     this.setCalendarCollectionRoot(this.calFolderPath);
   }
 
@@ -194,10 +194,10 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
 
     CompFilter calendarFilter = new CompFilter(VCALENDAR);
     CompFilter eventFilter = new CompFilter(Component.VEVENT);
-    eventFilter.setTimeRange(new TimeRange(beginDate, null));
+    eventFilter.setTimeRange(new TimeRange(beginDate, endDate));
     calendarFilter.addCompFilter(eventFilter);
 
-    CalendarData calendarData = new CalendarData(CalendarData.LIMIT, beginDate,beginDate, null);
+    CalendarData calendarData = new CalendarData(CalendarData.LIMIT, beginDate,endDate, null);
 
     CalendarQuery query = new CalendarQuery(properties, calendarFilter, calendarData, false, false);
     logger.info(XMLUtils.prettyPrint(query));

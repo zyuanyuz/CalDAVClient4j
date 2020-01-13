@@ -1,18 +1,14 @@
 package yzy.zyuanyuz.caldavclient4j.client.util;
 
-import com.github.caldav4j.CalDAVConstants;
 import com.github.caldav4j.exceptions.CalDAV4JException;
 import com.github.caldav4j.methods.CalDAV4JMethodFactory;
-import com.github.caldav4j.methods.HttpCalDAVReportMethod;
 import com.github.caldav4j.methods.HttpPropFindMethod;
-import com.github.caldav4j.model.request.CalendarQuery;
-import com.github.caldav4j.model.request.CompFilter;
 import com.github.caldav4j.model.response.CalendarDataProperty;
 import com.github.caldav4j.util.CalDAVStatus;
+import com.github.caldav4j.util.XMLUtils;
+import com.sun.xml.bind.v2.runtime.XMLSerializer;
 import net.fortuna.ical4j.model.Calendar;
-import net.fortuna.ical4j.model.Component;
 import net.fortuna.ical4j.model.component.VEvent;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
@@ -25,8 +21,6 @@ import org.apache.http.conn.ssl.TrustAllStrategy;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.ssl.SSLContextBuilder;
-import org.apache.http.util.EntityUtils;
-import org.apache.jackrabbit.webdav.DavException;
 import org.apache.jackrabbit.webdav.MultiStatus;
 import org.apache.jackrabbit.webdav.MultiStatusResponse;
 import org.apache.jackrabbit.webdav.property.DavPropertyName;
@@ -34,12 +28,9 @@ import org.apache.jackrabbit.webdav.property.DavPropertyNameSet;
 import org.w3c.dom.Document;
 import yzy.zyuanyuz.caldavclient4j.client.commons.ResourceEntry;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static net.fortuna.ical4j.model.Component.VEVENT;
@@ -47,7 +38,7 @@ import static org.apache.http.HttpStatus.SC_NOT_FOUND;
 import static org.apache.http.HttpStatus.SC_OK;
 import static org.apache.jackrabbit.webdav.property.DavPropertyName.DISPLAYNAME;
 import static yzy.zyuanyuz.caldavclient4j.client.commons.ICloudCalDAVConstants.CURRENT_USER_PRINCIPAL_STR;
-import static yzy.zyuanyuz.caldavclient4j.client.commons.ICloudCalDAVConstants.ICLOUD_CALDAV_HOST_PORT;
+import static yzy.zyuanyuz.caldavclient4j.client.commons.ICloudCalDAVConstants.ICLOUD_CALDAV_HOST_PORT_STR;
 
 /**
  * @author George Yu
@@ -64,7 +55,7 @@ public final class ICloudCalendarUtil {
     Document doc;
     try {
       HttpPropFindMethod propFindMethod =
-          methodFactory.createPropFindMethod(ICLOUD_CALDAV_HOST_PORT, nameSet, 0);
+          methodFactory.createPropFindMethod(ICLOUD_CALDAV_HOST_PORT_STR, nameSet, 0);
       HttpResponse response = httpClient.execute(propFindMethod);
       doc = propFindMethod.getResponseBodyAsDocument(response.getEntity());
     } catch (Exception e) {
@@ -110,7 +101,7 @@ public final class ICloudCalendarUtil {
   public static List<ResourceEntry> getAllResourceFromServer(
       HttpClient httpClient, CalDAV4JMethodFactory methodFactory, String principalId)
       throws CalDAV4JException {
-    String url = ICLOUD_CALDAV_HOST_PORT + principalId + "/calendars";
+    String url = ICLOUD_CALDAV_HOST_PORT_STR + principalId + "/calendars";
     DavPropertyNameSet propertyNameSet = new DavPropertyNameSet();
     propertyNameSet.add(DISPLAYNAME);
     MultiStatusResponse[] multiStatusResponses = null;
@@ -142,7 +133,7 @@ public final class ICloudCalendarUtil {
    * handle the sync collection response
    *
    * @param multiStatus
-   * @return Triple<List<String> eventsHrefToMGet, List<String> eventUidDeletedFromServer, String
+   * @return Triple<List<String> eventsHrefToMGet, List<String> eventUidDeletedInServer, String
    *     nextSyncToken>
    */
   public static Triple<List<String>, List<String>, String> getSyncHrefsAndToDel(
@@ -151,7 +142,7 @@ public final class ICloudCalendarUtil {
 
     List<String> hrefsToMGet = new ArrayList<>();
     List<String> uidToDel = new ArrayList<>();
-    String nextSyncToken = multiStatus.getResponseDescription(); // TODO [bug] how get the next syncToken?
+    String nextSyncToken = multiStatusResponses[multiStatusResponses.length-1].toString();        // TODO [new feature] how get the next syncToken?
 
     for (int i = 1; i < multiStatusResponses.length; i++) {
       if (null != multiStatusResponses[i].getProperties(SC_OK)) {
@@ -177,7 +168,7 @@ public final class ICloudCalendarUtil {
   }
 
   public static String pathToCalendarPath(String principalId, String resourceId, String uuid) {
-    return ICLOUD_CALDAV_HOST_PORT
+    return ICLOUD_CALDAV_HOST_PORT_STR
         + "/"
         + principalId
         + "/calendars/"

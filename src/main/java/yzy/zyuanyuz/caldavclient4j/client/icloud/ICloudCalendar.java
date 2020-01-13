@@ -5,28 +5,43 @@ import com.github.caldav4j.exceptions.CalDAV4JException;
 import com.github.caldav4j.methods.CalDAV4JMethodFactory;
 import com.github.caldav4j.methods.HttpCalDAVReportMethod;
 import com.github.caldav4j.model.request.*;
+import com.github.caldav4j.util.XMLUtils;
+import net.fortuna.ical4j.model.Component;
 import net.fortuna.ical4j.model.DateTime;
 import net.fortuna.ical4j.model.component.VEvent;
 import org.apache.commons.lang3.tuple.Triple;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
+import org.apache.http.util.EntityUtils;
+import org.apache.jackrabbit.webdav.MultiStatus;
+import org.apache.jackrabbit.webdav.property.DavPropertyName;
+import org.apache.jackrabbit.webdav.property.DavPropertyNameSet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import yzy.zyuanyuz.caldavclient4j.client.commons.ResourceEntry;
 import yzy.zyuanyuz.caldavclient4j.client.extensions.model.request.SyncCollection;
 import yzy.zyuanyuz.caldavclient4j.client.util.ICloudCalendarUtil;
 
 import java.util.ArrayList;
 
+import static net.fortuna.ical4j.model.Calendar.VCALENDAR;
+import static yzy.zyuanyuz.caldavclient4j.client.commons.ICloudCalDAVConstants.ICLOUD_CALDAV_HOST;
+import static yzy.zyuanyuz.caldavclient4j.client.commons.ICloudCalDAVConstants.ICLOUD_CALDAV_HOST_PORT_STR;
+
 /**
  * @author zyuanyuz
  * @since 2019/12/28 22:09
  */
 public class ICloudCalendar {
+  private static final Logger calendarLogger = LoggerFactory.getLogger(ICloudCalendar.class);
 
   private HttpClient httpClient;
 
   private CalDAV4JMethodFactory methodFactory;
 
   private String principalId;
+
+  private boolean debugMode;
 
   public HttpClient getHttpClient() {
     return httpClient;
@@ -52,6 +67,14 @@ public class ICloudCalendar {
     this.principalId = principalId;
   }
 
+  public boolean getDebugMode() {
+    return debugMode;
+  }
+
+  public void setDebugMode(boolean debugMode) {
+    this.debugMode = debugMode;
+  }
+
   private String getBaseServiceURI() {
     return principalId + "/calendars/";
   }
@@ -71,9 +94,10 @@ public class ICloudCalendar {
 
       public IResource execute() {
         try {
-          IResource.this.resourceEntries = ICloudCalendarUtil.getAllResourceFromServer(httpClient, methodFactory, principalId);
+          IResource.this.resourceEntries =
+              ICloudCalendarUtil.getAllResourceFromServer(httpClient, methodFactory, principalId);
         } catch (Exception e) {
-            e.printStackTrace();
+          e.printStackTrace();
         }
         return IResource.this;
       }
@@ -126,10 +150,9 @@ public class ICloudCalendar {
        * @return
        */
       public List setSyncToken(String syncToken) {
-        if (reportRequest instanceof SyncCollection) {
-          ((SyncCollection) reportRequest).setSyncToken(syncToken);
+        if (!(reportRequest instanceof SyncCollection)) {
+          reportRequest = new SyncCollection();
         }
-        reportRequest = new SyncCollection();
         ((SyncCollection) reportRequest).setSyncToken(syncToken);
         return this;
       }
@@ -183,7 +206,8 @@ public class ICloudCalendar {
       }
 
       public List setSingleEventStartTime(DateTime startDateTime) {
-        singleEventStartDateTime = startDateTime;
+        this.singleEventStartDateTime = startDateTime;
+        this.singleEventStartDateTime.setUtc(true);
         return this;
       }
 
@@ -194,7 +218,19 @@ public class ICloudCalendar {
       }
 
       public List setSingleEventEndDateTime(DateTime endDateTime) {
-        singleEventEndDateTime = endDateTime;
+        this.singleEventEndDateTime = endDateTime;
+        this.singleEventEndDateTime.setUtc(true);
+        return this;
+      }
+
+      private boolean debugMode = false;
+
+      public boolean getDebugMode() {
+        return debugMode;
+      }
+
+      public List setDebugMode(boolean debugMode) {
+        this.debugMode = debugMode;
         return this;
       }
 
@@ -212,7 +248,8 @@ public class ICloudCalendar {
        * multi event hrefs.
        */
       private void executeWithSyncToken() {
-        String resourceUri = getBaseServiceURI() + resourceId + "/";
+        String resourceUri =
+            ICLOUD_CALDAV_HOST_PORT_STR + "/" + getBaseServiceURI() + resourceId + "/";
 
         java.util.List<String> hrefsToMGet;
         java.util.List<String> uidToDel;
@@ -225,15 +262,20 @@ public class ICloudCalendar {
           reportMethod =
               methodFactory.createCalDAVReportMethod(
                   resourceUri, reportRequest, CalDAVConstants.DEPTH_0);
+          if (debugMode) {
+            calendarLogger.info("syncToken report method:{}", XMLUtils.prettyPrint(reportRequest));
+          }
           response = httpClient.execute(reportMethod);
+          MultiStatus multiStatus = reportMethod.getResponseBodyAsMultiStatus(response);
           Triple<java.util.List<String>, java.util.List<String>, String> triple =
-              ICloudCalendarUtil.getSyncHrefsAndToDel(
-                  reportMethod.getResponseBodyAsMultiStatus(response));
+              ICloudCalendarUtil.getSyncHrefsAndToDel(multiStatus);
           hrefsToMGet = triple.getLeft();
           uidToDel = triple.getMiddle();
           nextSyncToken = triple.getRight();
         } catch (Exception e) {
-          e.printStackTrace();
+          if (debugMode) {
+            calendarLogger.error("syncToken report with error:", e);
+          }
           IEvent.this.uidToDelete = new ArrayList<>();
           IEvent.this.eventItems = new ArrayList<>();
           return;
@@ -248,7 +290,7 @@ public class ICloudCalendar {
         if (null != hrefsToMGet && !hrefsToMGet.isEmpty()) {
           CalendarMultiget multiGet = new CalendarMultiget();
           multiGet.setHrefs(hrefsToMGet);
-          if (isSingleEvent) {
+          if (isSingleEvent) { // single event can work with multiget report
             CalendarData calendarData =
                 new CalendarData(
                     CalendarData.LIMIT, singleEventStartDateTime, singleEventEndDateTime, null);
@@ -258,26 +300,37 @@ public class ICloudCalendar {
             reportMethod =
                 methodFactory.createCalDAVReportMethod(
                     resourceUri, multiGet, CalDAVConstants.DEPTH_1);
+            if (debugMode) {
+              calendarLogger.info("multiGet report method:{}", XMLUtils.prettyPrint(multiGet));
+            }
             response = httpClient.execute(reportMethod);
             IEvent.this.eventItems =
                 ICloudCalendarUtil.getVEventFromMultiStatus(
                     reportMethod.getResponseBodyAsMultiStatus(response));
           } catch (Exception e) {
-            e.printStackTrace();
+            if (debugMode) {
+              calendarLogger.error("multiGet calendar failed with error:", e);
+            }
             IEvent.this.eventItems = new ArrayList<>();
-            return;
           }
         }
       }
 
       /** */
       private void executeWithCalendarQuery() {
-        String resourceUri = getBaseServiceURI() + resourceId + "/";
+        String resourceUri =
+            ICLOUD_CALDAV_HOST_PORT_STR + "/" + getBaseServiceURI() + resourceId + "/";
+
+        DavPropertyNameSet properties = new DavPropertyNameSet();
+        properties.add(DavPropertyName.GETETAG);
+        ((CalendarQuery) reportRequest).setProperties(properties);
 
         if (null != startDateTime || null != endDateTime) {
-          CompFilter filter = new CompFilter();
-          filter.setTimeRange(new TimeRange(startDateTime, endDateTime));
-          ((CalendarQuery) reportRequest).setCompFilter(filter);
+          CompFilter calendarFilter = new CompFilter(VCALENDAR);
+          CompFilter eventFilter = new CompFilter(Component.VEVENT);
+          eventFilter.setTimeRange(new TimeRange(startDateTime, endDateTime));
+          calendarFilter.addCompFilter(eventFilter);
+          ((CalendarQuery) reportRequest).setCompFilter(calendarFilter);
         }
         if (isSingleEvent) {
           CalendarData calendarData =
@@ -289,14 +342,19 @@ public class ICloudCalendar {
           HttpCalDAVReportMethod reportMethod =
               methodFactory.createCalDAVReportMethod(
                   resourceUri, reportRequest, CalDAVConstants.DEPTH_1);
+          if (debugMode) {
+            calendarLogger.info(
+                "calendarQuery report request:{}", XMLUtils.prettyPrint(reportRequest));
+          }
           HttpResponse response = httpClient.execute(reportMethod);
           IEvent.this.eventItems =
               ICloudCalendarUtil.getVEventFromMultiStatus(
                   reportMethod.getResponseBodyAsMultiStatus(response));
         } catch (Exception e) {
-          e.printStackTrace();
+          if (debugMode) {
+            calendarLogger.error("multiGet calendar failed with error:", e);
+          }
           IEvent.this.eventItems = new ArrayList<>();
-          return;
         }
       }
     }
@@ -332,7 +390,7 @@ public class ICloudCalendar {
     }
   }
 
-  public static Builder builder(){
+  public static Builder builder() {
     return new Builder();
   }
 
@@ -344,6 +402,7 @@ public class ICloudCalendar {
     private HttpClient httpClient;
     private CalDAV4JMethodFactory methodFactory;
     private String principalId;
+    private boolean debugMode;
     private java.util.List<ResourceEntry> resourceEntryList = new java.util.ArrayList<>();
 
     public Builder() {}
@@ -375,6 +434,11 @@ public class ICloudCalendar {
       return this;
     }
 
+    public Builder setDebugMode(boolean debugMode) {
+      this.debugMode = debugMode;
+      return this;
+    }
+
     public Builder addResourceEntry(ResourceEntry resourceEntry) {
       this.resourceEntryList.add(resourceEntry);
       return this;
@@ -401,11 +465,12 @@ public class ICloudCalendar {
       iCloudCalendar.setHttpClient(httpClient);
       iCloudCalendar.setMethodFactory(methodFactory);
       iCloudCalendar.setPrincipalId(principalId);
+      iCloudCalendar.setDebugMode(debugMode);
       return iCloudCalendar;
     }
 
-    private boolean validBuilder(){
-
-    }
+    //    private boolean validBuilder(){
+    //
+    //    }
   }
 }
