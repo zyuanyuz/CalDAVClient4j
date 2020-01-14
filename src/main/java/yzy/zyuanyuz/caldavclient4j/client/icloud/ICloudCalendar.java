@@ -271,9 +271,7 @@ public class ICloudCalendar {
             calendarLogger.info("syncToken report method:{}", XMLUtils.prettyPrint(reportRequest));
           }
           HttpEntity httpEntity = httpClient.execute(reportMethod).getEntity();
-          //          System.out.println(EntityUtils.toString(httpEntity));
           Element element = reportMethod.getResponseBodyAsDocument(httpEntity).getDocumentElement();
-
           nextSyncToken = element.getElementsByTagName("sync-token").item(0).getFirstChild().getNodeValue();
           MultiStatus multiStatus = MultiStatus.createFromXml(element);
           Pair<java.util.List<String>, java.util.List<String>> triple =
@@ -412,7 +410,7 @@ public class ICloudCalendar {
     private CalDAV4JMethodFactory methodFactory;
     private String principalId;
     private boolean debugMode;
-    private java.util.List<ResourceEntry> resourceEntryList = new java.util.ArrayList<>();
+//    private java.util.List<ResourceEntry> resourceEntryList = new java.util.ArrayList<>();
 
     public Builder() {}
 
@@ -448,11 +446,6 @@ public class ICloudCalendar {
       return this;
     }
 
-    public Builder addResourceEntry(ResourceEntry resourceEntry) {
-      this.resourceEntryList.add(resourceEntry);
-      return this;
-    }
-
     public ICloudCalendar build() throws CalDAV4JException {
       ICloudCalendar iCloudCalendar = new ICloudCalendar();
       if (null == httpClient) {
@@ -467,15 +460,14 @@ public class ICloudCalendar {
       if (null == principalId) {
         principalId = ICloudCalendarUtil.getPrincipalId(httpClient, methodFactory);
       }
-      if (null == resourceEntryList || resourceEntryList.isEmpty()) {
-        resourceEntryList =
-            ICloudCalendarUtil.getAllResourceFromServer(httpClient, methodFactory, principalId);
-      }
+//      if (null == resourceEntryList || resourceEntryList.isEmpty()) {
+//        resourceEntryList =
+//            ICloudCalendarUtil.getAllResourceFromServer(httpClient, methodFactory, principalId);
+//      }
       iCloudCalendar.setHttpClient(httpClient);
       iCloudCalendar.setMethodFactory(methodFactory);
       iCloudCalendar.setPrincipalId(principalId);
       iCloudCalendar.setDebugMode(debugMode);
-      // TODO resourceEntryList never used.
       return iCloudCalendar;
     }
 
