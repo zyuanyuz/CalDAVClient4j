@@ -214,11 +214,11 @@ public class ICloudCalendar {
 
       private DateTime expandEventEndDateTime = null;
 
-      private DateTime getExpandEventEndDateTime() {
+      private DateTime getExpandEventEndTime() {
         return expandEventEndDateTime;
       }
 
-      public List setExpandEventEndDateTime(DateTime endDateTime) {
+      public List setExpandEventEndTime(DateTime endDateTime) {
         this.expandEventEndDateTime = endDateTime;
         this.expandEventEndDateTime.setUtc(true);
         return this;

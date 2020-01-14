@@ -36,7 +36,7 @@ public class Caldavclient4jApplicationTests {
             .list("work")
             .setExpandEvent(true)
             .setExpandEventStartTime(startTime)
-            .setExpandEventEndDateTime(endTime)
+            .setExpandEventEndTime(endTime)
             .setDebugMode(true)
             .setSyncToken(null)
             .execute();
@@ -85,6 +85,9 @@ public class Caldavclient4jApplicationTests {
             .list("work")
             .setStartDateTime(startDateTime)
             .setEndDateTime(endDateTime)
+            .setExpandEvent(true)
+            .setExpandEventStartTime(startDateTime)
+            .setExpandEventEndTime(new DateTime(startDateTime.getTime() +  24 * 60 * 60 * 1000))
             .setDebugMode(true)
             .execute();
     System.out.println(iEvent.getEventItems());

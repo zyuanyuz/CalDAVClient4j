@@ -18,7 +18,7 @@ import yzy.zyuanyuz.caldavclient4j.client.extensions.parameter.Size;
 public class ICloudCalendarDataProperty extends CalendarDataProperty {
 
     /**
-     * add some not standard parameters(such as EMAIL,FILENAME,SIZE etc.) to resole the ICloud calendar
+     * add some not standard parameters(such as EMAIL,FILENAME,SIZE etc.) to resolve the ICloud calendar
      */
     static{
         ParameterFactoryRegistry parameterFactoryRegistry = new ParameterFactoryRegistry();
