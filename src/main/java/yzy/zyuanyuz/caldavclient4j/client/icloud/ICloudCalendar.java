@@ -9,6 +9,7 @@ import com.github.caldav4j.util.XMLUtils;
 import net.fortuna.ical4j.model.Component;
 import net.fortuna.ical4j.model.DateTime;
 import net.fortuna.ical4j.model.component.VEvent;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -189,18 +190,18 @@ public class ICloudCalendar {
       }
 
       /** if set single event is true,singleEventStartTime and singleEventEndTime is required. */
-      private Boolean isSingleEvent;
+      private boolean isSingleEvent;
 
-      public Boolean isSingleEvent() {
+      public boolean isSingleEvent() {
         return isSingleEvent;
       }
 
-      public List setSingleEvent(Boolean isSingleEvent) {
+      public List setSingleEvent(boolean isSingleEvent) {
         this.isSingleEvent = isSingleEvent;
         return this;
       }
 
-      private DateTime singleEventStartDateTime;
+      private DateTime singleEventStartDateTime = null;
 
       private DateTime getSingleEventStartDateTime() {
         return singleEventStartDateTime;
@@ -212,7 +213,7 @@ public class ICloudCalendar {
         return this;
       }
 
-      private DateTime singleEventEndDateTime;
+      private DateTime singleEventEndDateTime = null;
 
       private DateTime getSingleEventEndDateTime() {
         return singleEventEndDateTime;
@@ -272,7 +273,8 @@ public class ICloudCalendar {
           }
           HttpEntity httpEntity = httpClient.execute(reportMethod).getEntity();
           Element element = reportMethod.getResponseBodyAsDocument(httpEntity).getDocumentElement();
-          nextSyncToken = element.getElementsByTagName("sync-token").item(0).getFirstChild().getNodeValue();
+          nextSyncToken =
+              element.getElementsByTagName("sync-token").item(0).getFirstChild().getNodeValue();
           MultiStatus multiStatus = MultiStatus.createFromXml(element);
           Pair<java.util.List<String>, java.util.List<String>> triple =
               ICloudCalendarUtil.getSyncHrefsAndToDel(multiStatus);
@@ -301,6 +303,8 @@ public class ICloudCalendar {
                 new CalendarData(
                     CalendarData.LIMIT, singleEventStartDateTime, singleEventEndDateTime, null);
             multiGet.setCalendarDataProp(calendarData);
+          } else {
+            multiGet.setCalendarDataProp(new CalendarData());
           }
           try {
             reportMethod =
@@ -310,9 +314,8 @@ public class ICloudCalendar {
               calendarLogger.info("multiGet report method:{}", XMLUtils.prettyPrint(multiGet));
             }
             response = httpClient.execute(reportMethod);
-            //System.out.println(EntityUtils.toString(response.getEntity()));
             IEvent.this.eventItems =
-                ICloudCalendarUtil.getMGetVEventFromMultiStatus(
+                ICloudCalendarUtil.getVEventFromMultiStatus(
                     reportMethod.getResponseBodyAsMultiStatus(response));
           } catch (Exception e) {
             if (debugMode) {
@@ -332,19 +335,23 @@ public class ICloudCalendar {
         properties.add(DavPropertyName.GETETAG);
         ((CalendarQuery) reportRequest).setProperties(properties);
 
+        CompFilter calendarFilter = new CompFilter(VCALENDAR);
+        CompFilter eventFilter = new CompFilter(Component.VEVENT);
+        calendarFilter.addCompFilter(eventFilter);
         if (null != startDateTime || null != endDateTime) {
-          CompFilter calendarFilter = new CompFilter(VCALENDAR);
-          CompFilter eventFilter = new CompFilter(Component.VEVENT);
           eventFilter.setTimeRange(new TimeRange(startDateTime, endDateTime));
-          calendarFilter.addCompFilter(eventFilter);
-          ((CalendarQuery) reportRequest).setCompFilter(calendarFilter);
         }
+        ((CalendarQuery) reportRequest).setCompFilter(calendarFilter);
+
         if (isSingleEvent) {
           CalendarData calendarData =
               new CalendarData(
                   CalendarData.LIMIT, singleEventStartDateTime, singleEventEndDateTime, null);
           ((CalendarQuery) reportRequest).setCalendarDataProp(calendarData);
+        } else {
+          ((CalendarQuery) reportRequest).setCalendarDataProp(new CalendarData());
         }
+
         try {
           HttpCalDAVReportMethod reportMethod =
               methodFactory.createCalDAVReportMethod(
@@ -354,8 +361,9 @@ public class ICloudCalendar {
                 "calendarQuery report request:{}", XMLUtils.prettyPrint(reportRequest));
           }
           HttpResponse response = httpClient.execute(reportMethod);
+          //System.out.println(EntityUtils.toString(response.getEntity()));
           IEvent.this.eventItems =
-              ICloudCalendarUtil.getMGetVEventFromMultiStatus(
+              ICloudCalendarUtil.getVEventFromMultiStatus(
                   reportMethod.getResponseBodyAsMultiStatus(response));
         } catch (Exception e) {
           if (debugMode) {
@@ -410,7 +418,7 @@ public class ICloudCalendar {
     private CalDAV4JMethodFactory methodFactory;
     private String principalId;
     private boolean debugMode;
-//    private java.util.List<ResourceEntry> resourceEntryList = new java.util.ArrayList<>();
+    //    private java.util.List<ResourceEntry> resourceEntryList = new java.util.ArrayList<>();
 
     public Builder() {}
 
@@ -449,7 +457,7 @@ public class ICloudCalendar {
     public ICloudCalendar build() throws CalDAV4JException {
       ICloudCalendar iCloudCalendar = new ICloudCalendar();
       if (null == httpClient) {
-        if (null == appleId || null == appPwd) {
+        if (StringUtils.isEmpty(appleId) || StringUtils.isEmpty(appPwd)) {
           return null;
         }
         httpClient = ICloudCalendarUtil.createHttpClient(appleId, appPwd);
@@ -460,10 +468,11 @@ public class ICloudCalendar {
       if (null == principalId) {
         principalId = ICloudCalendarUtil.getPrincipalId(httpClient, methodFactory);
       }
-//      if (null == resourceEntryList || resourceEntryList.isEmpty()) {
-//        resourceEntryList =
-//            ICloudCalendarUtil.getAllResourceFromServer(httpClient, methodFactory, principalId);
-//      }
+      //      if (null == resourceEntryList || resourceEntryList.isEmpty()) {
+      //        resourceEntryList =
+      //            ICloudCalendarUtil.getAllResourceFromServer(httpClient, methodFactory,
+      // principalId);
+      //      }
       iCloudCalendar.setHttpClient(httpClient);
       iCloudCalendar.setMethodFactory(methodFactory);
       iCloudCalendar.setPrincipalId(principalId);

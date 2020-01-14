@@ -198,7 +198,7 @@ public class ICloudCalDAVManager extends AbstractCalDAVManager {
     eventFilter.setTimeRange(new TimeRange(beginDate, endDate));
     calendarFilter.addCompFilter(eventFilter);
 
-    CalendarData calendarData = new CalendarData(CalendarData.LIMIT, beginDate,endDate, null);
+    CalendarData calendarData = new CalendarData(CalendarData.EXPAND, beginDate,endDate, null);
 
     CalendarQuery query = new CalendarQuery(properties, calendarFilter, calendarData, false, false);
     logger.info(XMLUtils.prettyPrint(query));

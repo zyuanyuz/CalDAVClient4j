@@ -57,7 +57,7 @@ public final class ICloudCalendarUtil {
       HttpResponse response = httpClient.execute(propFindMethod);
       doc = propFindMethod.getResponseBodyAsDocument(response.getEntity());
     } catch (Exception e) {
-      throw new CalDAV4JException("Get PrincipalId failed with :" + e.getCause());
+      throw new CalDAV4JException("Get PrincipalId failed with :" + e);
     }
     String href = doc.getElementsByTagName("href").item(1).getFirstChild().getNodeValue();
     return href.substring(1, href.indexOf("/principal/"));
@@ -80,7 +80,10 @@ public final class ICloudCalendarUtil {
     try {
       return HttpClients.custom()
           .setSSLContext(
-              new SSLContextBuilder().loadTrustMaterial(null, TrustAllStrategy.INSTANCE).build())
+              new SSLContextBuilder()
+                  .loadTrustMaterial(null, TrustAllStrategy.INSTANCE)
+                  .setProtocol("TLSv1.2")
+                  .build())
           .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE)
           .setDefaultCredentialsProvider(provider)
           .build();
@@ -144,21 +147,28 @@ public final class ICloudCalendarUtil {
       if (null != multiStatusResponses[i].getProperties(SC_OK)) {
         hrefsToMGet.add(multiStatusResponses[i].getHref());
       }
-      if (null != multiStatusResponses[i].getProperties(SC_NOT_FOUND)) {
+      if (multiStatusResponses[i].getStatus()[0].getStatusCode() == SC_NOT_FOUND) {
         uidToDel.add(getUidFromHref(multiStatusResponses[i].getHref()));
       }
     }
     return Pair.of(hrefsToMGet, uidToDel);
   }
 
-  public static List<VEvent> getMGetVEventFromMultiStatus(MultiStatus multiStatus) {
+  /**
+   * TODO need more test,understand the MultiStatusResponse
+   * @param multiStatus
+   * @return
+   */
+  public static List<VEvent> getVEventFromMultiStatus(MultiStatus multiStatus) {
     MultiStatusResponse[] multiStatusResponses = multiStatus.getResponses();
     List<VEvent> eventList = new ArrayList<>();
-    for (MultiStatusResponse multiStatusResponse : multiStatusResponses) { // skip one
-      eventList.add(
-          (VEvent)
-              CalendarDataProperty.getCalendarfromResponse(multiStatusResponse)
-                  .getComponent(VEVENT));
+    for (MultiStatusResponse multiStatusResponse : multiStatusResponses) {
+      if (CalendarDataProperty.getCalendarfromResponse(multiStatusResponse) != null) {
+        eventList.add(
+            (VEvent)
+                CalendarDataProperty.getCalendarfromResponse(multiStatusResponse)
+                    .getComponent(VEVENT));
+      }
     }
     return eventList;
   }

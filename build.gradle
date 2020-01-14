@@ -25,8 +25,7 @@ dependencies {
     compile('org.ehcache:ehcache:3.8.1')
     compile('javax.cache:cache-api:1.1.1')
     compile('javax.servlet:javax.servlet-api:4.0.1')
-    compile('org.slf4j:slf4j-api:1.7.28')
-    // https://mvnrepository.com/artifact/junit/junit
+//    compile('org.slf4j:slf4j-api:1.7.28')
+    compile ('org.slf4j:slf4j-simple:1.7.30')
     testCompile ('junit:junit:4.13')
-
 }
