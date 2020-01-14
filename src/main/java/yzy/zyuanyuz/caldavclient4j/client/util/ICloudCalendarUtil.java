@@ -156,6 +156,7 @@ public final class ICloudCalendarUtil {
 
   /**
    * TODO need more test,understand the MultiStatusResponse
+   *
    * @param multiStatus
    * @return
    */
@@ -164,10 +165,11 @@ public final class ICloudCalendarUtil {
     List<VEvent> eventList = new ArrayList<>();
     for (MultiStatusResponse multiStatusResponse : multiStatusResponses) {
       if (CalendarDataProperty.getCalendarfromResponse(multiStatusResponse) != null) {
-        eventList.add(
-            (VEvent)
-                CalendarDataProperty.getCalendarfromResponse(multiStatusResponse)
-                    .getComponent(VEVENT));
+        eventList.addAll(
+            CalendarDataProperty.getCalendarfromResponse(multiStatusResponse).getComponents(VEVENT)
+                .stream()
+                .map(comp -> (VEvent) comp)
+                .collect(Collectors.toList()));
       }
     }
     return eventList;

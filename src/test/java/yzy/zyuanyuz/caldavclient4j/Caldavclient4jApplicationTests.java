@@ -34,9 +34,9 @@ public class Caldavclient4jApplicationTests {
         calendar
             .iEvent()
             .list("work")
-            .setSingleEvent(true)
-            .setSingleEventStartTime(startTime)
-            .setSingleEventEndDateTime(endTime)
+            .setExpandEvent(true)
+            .setExpandEventStartTime(startTime)
+            .setExpandEventEndDateTime(endTime)
             .setDebugMode(true)
             .setSyncToken(null)
             .execute();
@@ -63,14 +63,13 @@ public class Caldavclient4jApplicationTests {
   @Test
   public void testCalendarQuery2() throws Exception {
     DateTime startDateTime = new DateTime();
-    DateTime endDateTime = new DateTime(startDateTime.getTime() + 24 * 60 * 60 * 1000);
+    DateTime endDateTime = new DateTime(startDateTime.getTime() + 3 * 24 * 60 * 60 * 1000);
     ICloudCalendar.IEvent iEvent =
         calendar
             .iEvent()
             .list("work")
-            .setSingleEvent(true)
-            .setSingleEventStartTime(startDateTime)
-            .setSingleEventEndDateTime(endDateTime)
+            .setStartDateTime(startDateTime)
+            .setEndDateTime(endDateTime)
             .setDebugMode(true)
             .execute();
     System.out.println(iEvent.getEventItems());
@@ -79,16 +78,13 @@ public class Caldavclient4jApplicationTests {
   @Test
   public void testCalendarQuery3() throws Exception {
     DateTime startDateTime = new DateTime();
-    DateTime endDateTime = new DateTime(startDateTime.getTime() + 24 * 60 * 60 * 1000);
+    DateTime endDateTime = new DateTime(startDateTime.getTime() + 3 * 24 * 60 * 60 * 1000);
     ICloudCalendar.IEvent iEvent =
         calendar
             .iEvent()
             .list("work")
             .setStartDateTime(startDateTime)
             .setEndDateTime(endDateTime)
-            .setSingleEvent(true)
-            .setSingleEventStartTime(startDateTime)
-            .setSingleEventEndDateTime(endDateTime)
             .setDebugMode(true)
             .execute();
     System.out.println(iEvent.getEventItems());

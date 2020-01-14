@@ -14,7 +14,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
-import org.apache.http.util.EntityUtils;
 import org.apache.jackrabbit.webdav.MultiStatus;
 import org.apache.jackrabbit.webdav.property.DavPropertyName;
 import org.apache.jackrabbit.webdav.property.DavPropertyNameSet;
@@ -189,39 +188,39 @@ public class ICloudCalendar {
         return this;
       }
 
-      /** if set single event is true,singleEventStartTime and singleEventEndTime is required. */
-      private boolean isSingleEvent;
+      /** if set single event is false,singleEventStartTime and singleEventEndTime is required. */
+      private boolean isExpandEvent = false;
 
-      public boolean isSingleEvent() {
-        return isSingleEvent;
+      public boolean isExpandEvent() {
+        return isExpandEvent;
       }
 
-      public List setSingleEvent(boolean isSingleEvent) {
-        this.isSingleEvent = isSingleEvent;
+      public List setExpandEvent(boolean isExpandEvent) {
+        this.isExpandEvent = isExpandEvent;
         return this;
       }
 
-      private DateTime singleEventStartDateTime = null;
+      private DateTime expandEventStartDateTime = null;
 
-      private DateTime getSingleEventStartDateTime() {
-        return singleEventStartDateTime;
+      private DateTime getExpandEventStartDateTime() {
+        return expandEventStartDateTime;
       }
 
-      public List setSingleEventStartTime(DateTime startDateTime) {
-        this.singleEventStartDateTime = startDateTime;
-        this.singleEventStartDateTime.setUtc(true);
+      public List setExpandEventStartTime(DateTime startDateTime) {
+        this.expandEventStartDateTime = startDateTime;
+        this.expandEventStartDateTime.setUtc(true);
         return this;
       }
 
-      private DateTime singleEventEndDateTime = null;
+      private DateTime expandEventEndDateTime = null;
 
-      private DateTime getSingleEventEndDateTime() {
-        return singleEventEndDateTime;
+      private DateTime getExpandEventEndDateTime() {
+        return expandEventEndDateTime;
       }
 
-      public List setSingleEventEndDateTime(DateTime endDateTime) {
-        this.singleEventEndDateTime = endDateTime;
-        this.singleEventEndDateTime.setUtc(true);
+      public List setExpandEventEndDateTime(DateTime endDateTime) {
+        this.expandEventEndDateTime = endDateTime;
+        this.expandEventEndDateTime.setUtc(true);
         return this;
       }
 
@@ -298,10 +297,10 @@ public class ICloudCalendar {
         if (null != hrefsToMGet && !hrefsToMGet.isEmpty()) {
           CalendarMultiget multiGet = new CalendarMultiget();
           multiGet.setHrefs(hrefsToMGet);
-          if (isSingleEvent) { // single event can work with multiget report?
+          if (isExpandEvent) {
             CalendarData calendarData =
                 new CalendarData(
-                    CalendarData.LIMIT, singleEventStartDateTime, singleEventEndDateTime, null);
+                    CalendarData.EXPAND, expandEventStartDateTime, expandEventEndDateTime, null);
             multiGet.setCalendarDataProp(calendarData);
           } else {
             multiGet.setCalendarDataProp(new CalendarData());
@@ -343,10 +342,10 @@ public class ICloudCalendar {
         }
         ((CalendarQuery) reportRequest).setCompFilter(calendarFilter);
 
-        if (isSingleEvent) {
+        if (isExpandEvent) {
           CalendarData calendarData =
               new CalendarData(
-                  CalendarData.LIMIT, singleEventStartDateTime, singleEventEndDateTime, null);
+                  CalendarData.EXPAND, expandEventStartDateTime, expandEventEndDateTime, null);
           ((CalendarQuery) reportRequest).setCalendarDataProp(calendarData);
         } else {
           ((CalendarQuery) reportRequest).setCalendarDataProp(new CalendarData());
@@ -361,7 +360,7 @@ public class ICloudCalendar {
                 "calendarQuery report request:{}", XMLUtils.prettyPrint(reportRequest));
           }
           HttpResponse response = httpClient.execute(reportMethod);
-          //System.out.println(EntityUtils.toString(response.getEntity()));
+          // System.out.println(EntityUtils.toString(response.getEntity()));
           IEvent.this.eventItems =
               ICloudCalendarUtil.getVEventFromMultiStatus(
                   reportMethod.getResponseBodyAsMultiStatus(response));
