@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import yzy.zyuanyuz.caldavclient4j.client.AbstractCalDAVManager;
 import yzy.zyuanyuz.caldavclient4j.client.commons.EventEntry;
+import yzy.zyuanyuz.caldavclient4j.client.extensions.model.request.SyncCollection;
 import yzy.zyuanyuz.caldavclient4j.client.util.ICloudCalendarUtil;
 
 import java.util.*;

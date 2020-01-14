@@ -86,6 +86,6 @@ public class ClientController {
   public void testManager() throws Exception {
     ICloudCalDAVManager manager =
         new ICloudCalDAVManager("zyuanyuz@icloud.com", "ieix-obgf-gxmi-oiws", "work");
-    System.out.println(manager.getEventsForNDays(3));
+
   }
 }

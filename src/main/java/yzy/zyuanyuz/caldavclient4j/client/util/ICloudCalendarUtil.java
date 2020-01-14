@@ -5,11 +5,9 @@ import com.github.caldav4j.methods.CalDAV4JMethodFactory;
 import com.github.caldav4j.methods.HttpPropFindMethod;
 import com.github.caldav4j.model.response.CalendarDataProperty;
 import com.github.caldav4j.util.CalDAVStatus;
-import com.github.caldav4j.util.XMLUtils;
-import com.sun.xml.bind.v2.runtime.XMLSerializer;
 import net.fortuna.ical4j.model.Calendar;
 import net.fortuna.ical4j.model.component.VEvent;
-import org.apache.commons.lang3.tuple.Triple;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.auth.AuthScope;
@@ -136,13 +134,11 @@ public final class ICloudCalendarUtil {
    * @return Triple<List<String> eventsHrefToMGet, List<String> eventUidDeletedInServer, String
    *     nextSyncToken>
    */
-  public static Triple<List<String>, List<String>, String> getSyncHrefsAndToDel(
-      MultiStatus multiStatus) {
+  public static Pair<List<String>, List<String>> getSyncHrefsAndToDel(MultiStatus multiStatus) {
     MultiStatusResponse[] multiStatusResponses = multiStatus.getResponses();
 
     List<String> hrefsToMGet = new ArrayList<>();
     List<String> uidToDel = new ArrayList<>();
-    String nextSyncToken = multiStatusResponses[multiStatusResponses.length-1].toString();        // TODO [new feature] how get the next syncToken?
 
     for (int i = 1; i < multiStatusResponses.length; i++) {
       if (null != multiStatusResponses[i].getProperties(SC_OK)) {
@@ -152,16 +148,16 @@ public final class ICloudCalendarUtil {
         uidToDel.add(getUidFromHref(multiStatusResponses[i].getHref()));
       }
     }
-    return Triple.of(hrefsToMGet, uidToDel, nextSyncToken);
+    return Pair.of(hrefsToMGet, uidToDel);
   }
 
-  public static List<VEvent> getVEventFromMultiStatus(MultiStatus multiStatus) {
+  public static List<VEvent> getMGetVEventFromMultiStatus(MultiStatus multiStatus) {
     MultiStatusResponse[] multiStatusResponses = multiStatus.getResponses();
     List<VEvent> eventList = new ArrayList<>();
-    for (int i = 1; i < multiStatusResponses.length; i++) { // skip one
+    for (MultiStatusResponse multiStatusResponse : multiStatusResponses) { // skip one
       eventList.add(
           (VEvent)
-              CalendarDataProperty.getCalendarfromResponse(multiStatusResponses[i])
+              CalendarDataProperty.getCalendarfromResponse(multiStatusResponse)
                   .getComponent(VEVENT));
     }
     return eventList;

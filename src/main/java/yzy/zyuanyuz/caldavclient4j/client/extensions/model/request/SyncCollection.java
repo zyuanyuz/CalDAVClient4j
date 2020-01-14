@@ -42,7 +42,11 @@ public class SyncCollection extends OutputsDOMBase implements CalDAVReportReques
 
   @SuppressWarnings("unchecked")
   public SyncCollection(
-      Prop properties, String syncToken, String syncLevel, Limit limit, CalendarData calendarData) {
+      Prop<OutputsDOMBase> properties,
+      String syncToken,
+      String syncLevel,
+      Limit limit,
+      CalendarData calendarData) {
     this(syncToken, syncLevel, limit, calendarData);
     if (properties != null) {
       this.properties.addChildren(properties);
@@ -109,9 +113,11 @@ public class SyncCollection extends OutputsDOMBase implements CalDAVReportReques
     children.add(
         new DefaultDavProperty<String>(
             ELEM_SYNC_LEVEL,
-            null == this.syncLevel ? "1" : this.syncLevel,   // if not set the syncLevel,set a default value "1"
+            null == this.syncLevel
+                ? "1"
+                : this.syncLevel, // if not set the syncLevel,set a default value "1"
             CalDAVConstants.NAMESPACE_WEBDAV));
-    if (this.limit != null) children.add(this.limit);
+    children.add(null == limit ? new Limit(1) : this.limit);
     if ((this.properties != null && !this.properties.isEmpty()) || this.calendarData != null) {
       Prop tmp = new Prop();
       tmp.addChildren(this.properties.getChildren());

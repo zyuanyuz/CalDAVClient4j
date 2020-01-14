@@ -9,7 +9,8 @@ import com.github.caldav4j.util.XMLUtils;
 import net.fortuna.ical4j.model.Component;
 import net.fortuna.ical4j.model.DateTime;
 import net.fortuna.ical4j.model.component.VEvent;
-import org.apache.commons.lang3.tuple.Triple;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.util.EntityUtils;
@@ -18,6 +19,7 @@ import org.apache.jackrabbit.webdav.property.DavPropertyName;
 import org.apache.jackrabbit.webdav.property.DavPropertyNameSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.w3c.dom.Element;
 import yzy.zyuanyuz.caldavclient4j.client.commons.ResourceEntry;
 import yzy.zyuanyuz.caldavclient4j.client.extensions.model.request.SyncCollection;
 import yzy.zyuanyuz.caldavclient4j.client.util.ICloudCalendarUtil;
@@ -25,7 +27,6 @@ import yzy.zyuanyuz.caldavclient4j.client.util.ICloudCalendarUtil;
 import java.util.ArrayList;
 
 import static net.fortuna.ical4j.model.Calendar.VCALENDAR;
-import static yzy.zyuanyuz.caldavclient4j.client.commons.ICloudCalDAVConstants.ICLOUD_CALDAV_HOST;
 import static yzy.zyuanyuz.caldavclient4j.client.commons.ICloudCalDAVConstants.ICLOUD_CALDAV_HOST_PORT_STR;
 
 /**
@@ -248,8 +249,7 @@ public class ICloudCalendar {
        * multi event hrefs.
        */
       private void executeWithSyncToken() {
-        String resourceUri =
-            ICLOUD_CALDAV_HOST_PORT_STR + "/" + getBaseServiceURI() + resourceId + "/";
+        String resourceUri = ICLOUD_CALDAV_HOST_PORT_STR + getBaseServiceURI() + resourceId + "/";
 
         java.util.List<String> hrefsToMGet;
         java.util.List<String> uidToDel;
@@ -258,6 +258,11 @@ public class ICloudCalendar {
         HttpCalDAVReportMethod reportMethod;
         HttpResponse response;
 
+        // add get etag
+        // DavPropertyNameSet properties = new DavPropertyNameSet();
+        // properties.add(DavPropertyName.GETETAG);
+        // ((SyncCollection)reportRequest).getProperties().addChildren(properties);
+
         try {
           reportMethod =
               methodFactory.createCalDAVReportMethod(
@@ -265,13 +270,16 @@ public class ICloudCalendar {
           if (debugMode) {
             calendarLogger.info("syncToken report method:{}", XMLUtils.prettyPrint(reportRequest));
           }
-          response = httpClient.execute(reportMethod);
-          MultiStatus multiStatus = reportMethod.getResponseBodyAsMultiStatus(response);
-          Triple<java.util.List<String>, java.util.List<String>, String> triple =
+          HttpEntity httpEntity = httpClient.execute(reportMethod).getEntity();
+          //          System.out.println(EntityUtils.toString(httpEntity));
+          Element element = reportMethod.getResponseBodyAsDocument(httpEntity).getDocumentElement();
+
+          nextSyncToken = element.getElementsByTagName("sync-token").item(0).getFirstChild().getNodeValue();
+          MultiStatus multiStatus = MultiStatus.createFromXml(element);
+          Pair<java.util.List<String>, java.util.List<String>> triple =
               ICloudCalendarUtil.getSyncHrefsAndToDel(multiStatus);
           hrefsToMGet = triple.getLeft();
-          uidToDel = triple.getMiddle();
-          nextSyncToken = triple.getRight();
+          uidToDel = triple.getRight();
         } catch (Exception e) {
           if (debugMode) {
             calendarLogger.error("syncToken report with error:", e);
@@ -290,7 +298,7 @@ public class ICloudCalendar {
         if (null != hrefsToMGet && !hrefsToMGet.isEmpty()) {
           CalendarMultiget multiGet = new CalendarMultiget();
           multiGet.setHrefs(hrefsToMGet);
-          if (isSingleEvent) { // single event can work with multiget report
+          if (isSingleEvent) { // single event can work with multiget report?
             CalendarData calendarData =
                 new CalendarData(
                     CalendarData.LIMIT, singleEventStartDateTime, singleEventEndDateTime, null);
@@ -304,8 +312,9 @@ public class ICloudCalendar {
               calendarLogger.info("multiGet report method:{}", XMLUtils.prettyPrint(multiGet));
             }
             response = httpClient.execute(reportMethod);
+            //System.out.println(EntityUtils.toString(response.getEntity()));
             IEvent.this.eventItems =
-                ICloudCalendarUtil.getVEventFromMultiStatus(
+                ICloudCalendarUtil.getMGetVEventFromMultiStatus(
                     reportMethod.getResponseBodyAsMultiStatus(response));
           } catch (Exception e) {
             if (debugMode) {
@@ -348,7 +357,7 @@ public class ICloudCalendar {
           }
           HttpResponse response = httpClient.execute(reportMethod);
           IEvent.this.eventItems =
-              ICloudCalendarUtil.getVEventFromMultiStatus(
+              ICloudCalendarUtil.getMGetVEventFromMultiStatus(
                   reportMethod.getResponseBodyAsMultiStatus(response));
         } catch (Exception e) {
           if (debugMode) {
@@ -466,6 +475,7 @@ public class ICloudCalendar {
       iCloudCalendar.setMethodFactory(methodFactory);
       iCloudCalendar.setPrincipalId(principalId);
       iCloudCalendar.setDebugMode(debugMode);
+      // TODO resourceEntryList never used.
       return iCloudCalendar;
     }
 
