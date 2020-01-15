@@ -9,11 +9,13 @@ import com.github.caldav4j.util.XMLUtils;
 import net.fortuna.ical4j.model.Component;
 import net.fortuna.ical4j.model.DateTime;
 import net.fortuna.ical4j.model.component.VEvent;
+import org.apache.commons.collections4.Get;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
+import org.apache.http.util.EntityUtils;
 import org.apache.jackrabbit.webdav.MultiStatus;
 import org.apache.jackrabbit.webdav.property.DavPropertyName;
 import org.apache.jackrabbit.webdav.property.DavPropertyNameSet;
@@ -27,6 +29,7 @@ import yzy.zyuanyuz.caldavclient4j.client.util.ICloudCalendarUtil;
 import java.util.ArrayList;
 
 import static net.fortuna.ical4j.model.Calendar.VCALENDAR;
+import static net.fortuna.ical4j.model.Component.VEVENT;
 import static yzy.zyuanyuz.caldavclient4j.client.commons.ICloudCalDAVConstants.ICLOUD_CALDAV_HOST_PORT_STR;
 
 /**
@@ -131,12 +134,13 @@ public class ICloudCalendar {
 
       private String resourceId;
 
+      /* default is CalendarQuery , if set sync token , will be changed to SyncCollection*/
+      private CalDAVReportRequest reportRequest;
+
       List(String resourceId) {
         this.resourceId = resourceId;
         this.reportRequest = new CalendarQuery();
       }
-
-      private CalDAVReportRequest reportRequest;
 
       public String getSyncToken() {
         return reportRequest instanceof SyncCollection
@@ -165,7 +169,7 @@ public class ICloudCalendar {
       }
 
       /**
-       * this time should set as UTC time
+       * this time should be set as UTC time end with 'Z'
        *
        * @param startDataTime
        * @return
@@ -182,13 +186,18 @@ public class ICloudCalendar {
         return endDateTime;
       }
 
+      /**
+       * this end time should be set as UTC time what end with 'Z'
+       * @param endDateTime
+       * @return
+       */
       public List setEndDateTime(DateTime endDateTime) {
         this.endDateTime = endDateTime;
         this.endDateTime.setUtc(true);
         return this;
       }
 
-      /** if set single event is false,singleEventStartTime and singleEventEndTime is required. */
+      /** only the time-range filter exist,the expand event will work with the recurrence events */
       private boolean isExpandEvent = false;
 
       public boolean isExpandEvent() {
@@ -258,11 +267,6 @@ public class ICloudCalendar {
         HttpCalDAVReportMethod reportMethod;
         HttpResponse response;
 
-        // add get etag
-        // DavPropertyNameSet properties = new DavPropertyNameSet();
-        // properties.add(DavPropertyName.GETETAG);
-        // ((SyncCollection)reportRequest).getProperties().addChildren(properties);
-
         try {
           reportMethod =
               methodFactory.createCalDAVReportMethod(
@@ -287,7 +291,7 @@ public class ICloudCalendar {
           IEvent.this.eventItems = new ArrayList<>();
           return;
         }
-        if (null != uidToDel && !uidToDel.isEmpty()) {
+        if (null != uidToDel) { // if it's a empty , just set uidToDelete as empty list
           IEvent.this.uidToDelete = uidToDel;
         }
         if (null != nextSyncToken) {
@@ -322,6 +326,8 @@ public class ICloudCalendar {
             }
             IEvent.this.eventItems = new ArrayList<>();
           }
+        } else {
+          IEvent.this.eventItems = new ArrayList<>();
         }
       }
 
@@ -335,7 +341,7 @@ public class ICloudCalendar {
         ((CalendarQuery) reportRequest).setProperties(properties);
 
         CompFilter calendarFilter = new CompFilter(VCALENDAR);
-        CompFilter eventFilter = new CompFilter(Component.VEVENT);
+        CompFilter eventFilter = new CompFilter(VEVENT);
         calendarFilter.addCompFilter(eventFilter);
         if (null != startDateTime || null != endDateTime) {
           eventFilter.setTimeRange(new TimeRange(startDateTime, endDateTime));
@@ -373,11 +379,19 @@ public class ICloudCalendar {
       }
     }
 
+    public Add add() {
+      return new Add();
+    }
+
+    public class Add {}
+
     private java.util.List<VEvent> eventItems;
 
     private java.util.List<String> uidToDelete;
 
     private String nextSyncToken;
+
+    private boolean requestStatus;
 
     public java.util.List<VEvent> getEventItems() {
       return eventItems;
@@ -401,6 +415,14 @@ public class ICloudCalendar {
 
     public void setNextSyncToken(String nextSyncToken) {
       this.nextSyncToken = nextSyncToken;
+    }
+
+    public boolean getRequestStatus() {
+      return this.requestStatus;
+    }
+
+    public void setRequestStatus(boolean requestStatus) {
+      this.requestStatus = requestStatus;
     }
   }
 
@@ -478,9 +500,5 @@ public class ICloudCalendar {
       iCloudCalendar.setDebugMode(debugMode);
       return iCloudCalendar;
     }
-
-    //    private boolean validBuilder(){
-    //
-    //    }
   }
 }
