@@ -4,11 +4,13 @@ import com.github.caldav4j.CalDAVConstants;
 import com.github.caldav4j.exceptions.CalDAV4JException;
 import com.github.caldav4j.methods.CalDAV4JMethodFactory;
 import com.github.caldav4j.methods.HttpCalDAVReportMethod;
+import com.github.caldav4j.methods.HttpDeleteMethod;
 import com.github.caldav4j.model.request.*;
+import com.github.caldav4j.util.CalDAVStatus;
 import com.github.caldav4j.util.XMLUtils;
-import net.fortuna.ical4j.model.Component;
 import net.fortuna.ical4j.model.DateTime;
 import net.fortuna.ical4j.model.component.VEvent;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.http.HttpEntity;
@@ -25,8 +27,10 @@ import yzy.zyuanyuz.caldavclient4j.client.extensions.model.request.SyncCollectio
 import yzy.zyuanyuz.caldavclient4j.client.util.ICloudCalendarUtil;
 
 import java.util.ArrayList;
+import java.util.stream.Collectors;
 
 import static net.fortuna.ical4j.model.Calendar.VCALENDAR;
+import static net.fortuna.ical4j.model.Component.VEVENT;
 import static yzy.zyuanyuz.caldavclient4j.client.commons.ICloudCalDAVConstants.ICLOUD_CALDAV_HOST_PORT_STR;
 
 /**
@@ -120,6 +124,63 @@ public class ICloudCalendar {
   }
 
   public class IEvent {
+
+    public Get get() {
+      return new Get();
+    }
+
+    public Get get(String resourceId, String eventId) {
+      return new Get(resourceId, eventId);
+    }
+
+    public class Get {
+      private static final String REST_PATH = "{principalId}/calendars/{resourceId}/{eventId}.ics";
+
+      public Get() {}
+
+      public Get(String resourceId, String... eventId) {
+        this.resourceId = resourceId;
+        this.eventIdList.addAll(java.util.Arrays.asList(eventId));
+      }
+
+      private String resourceId;
+
+      public Get setResourceId(String resourceId) {
+        this.resourceId = resourceId;
+        return this;
+      }
+
+      private java.util.List<String> eventIdList = new java.util.ArrayList<>();
+
+      public Get setEventIdList(java.util.List<String> eventIdList) {
+        this.eventIdList = eventIdList;
+        return this;
+      }
+
+      public IEvent execute() {
+        if (StringUtils.isAnyEmpty(resourceId) || CollectionUtils.isEmpty(eventIdList)) {
+          return IEvent.this;
+        }
+        String resourceUri = ICLOUD_CALDAV_HOST_PORT_STR + getBaseServiceURI() + resourceId + "/";
+        CalendarMultiget multiGet = new CalendarMultiget();
+        multiGet.setHrefs(
+            this.eventIdList.stream()
+                .map(eventId -> getBaseServiceURI() + this.resourceId + "/" + eventId + ".ics")
+                .collect(Collectors.toList()));
+        HttpCalDAVReportMethod reportMethod;
+        try {
+          reportMethod =
+              methodFactory.createCalDAVReportMethod(
+                  resourceUri, multiGet, CalDAVConstants.DEPTH_1);
+          HttpResponse response = httpClient.execute(reportMethod);
+          MultiStatus multiStatus = reportMethod.getResponseBodyAsMultiStatus(response);
+          IEvent.this.eventItems = ICloudCalendarUtil.getVEventFromMultiStatus(multiStatus);
+        } catch (Exception e) {
+          IEvent.this.eventItems = new ArrayList<>();
+        }
+        return IEvent.this;
+      }
+    }
 
     public List list(String resourceId) {
       return new List(resourceId);
@@ -283,12 +344,12 @@ public class ICloudCalendar {
           if (debugMode) {
             calendarLogger.error("syncToken report with error:", e);
           }
-          IEvent.this.uidToDelete = new ArrayList<>();
+          IEvent.this.uidsToDelete = new ArrayList<>();
           IEvent.this.eventItems = new ArrayList<>();
           return;
         }
         if (null != uidToDel && !uidToDel.isEmpty()) {
-          IEvent.this.uidToDelete = uidToDel;
+          IEvent.this.uidsToDelete = uidToDel;
         }
         if (null != nextSyncToken) {
           IEvent.this.nextSyncToken = nextSyncToken;
@@ -335,7 +396,7 @@ public class ICloudCalendar {
         ((CalendarQuery) reportRequest).setProperties(properties);
 
         CompFilter calendarFilter = new CompFilter(VCALENDAR);
-        CompFilter eventFilter = new CompFilter(Component.VEVENT);
+        CompFilter eventFilter = new CompFilter(VEVENT);
         calendarFilter.addCompFilter(eventFilter);
         if (null != startDateTime || null != endDateTime) {
           eventFilter.setTimeRange(new TimeRange(startDateTime, endDateTime));
@@ -373,11 +434,100 @@ public class ICloudCalendar {
       }
     }
 
+    public Delete delete() {
+      return new Delete();
+    }
+
+    public Delete delete(String resourceId, String eventId) {
+      return new Delete(resourceId, eventId);
+    }
+
+    public class Delete {
+      private static final String REST_PATH = "{principalId}/calendars/{resourceId}/{eventId}.ics";
+
+      public Delete() {};
+
+      public Delete(String resourceId, String... eventIds) {
+        this.resourceId = resourceId;
+        this.eventIdList = new ArrayList<>();
+        this.eventIdList.addAll(java.util.Arrays.asList(eventIds));
+      }
+
+      private String resourceId;
+
+      public String getResourceId() {
+        return this.resourceId;
+      }
+
+      public Delete setResourceId(String resourceId) {
+        this.resourceId = resourceId;
+        return this;
+      }
+
+      private java.util.List<String> eventIdList;
+
+      public java.util.List<String> getEventIdList() {
+        return this.eventIdList;
+      }
+
+      public Delete setEventId(java.util.List<String> eventIdList) {
+        this.eventIdList = eventIdList;
+        return this;
+      }
+
+      private boolean debugMode = false;
+
+      public boolean getDebugMode() {
+        return this.debugMode;
+      }
+
+      public Delete setDebugMode(boolean debugMode) {
+        this.debugMode = debugMode;
+        return this;
+      }
+
+      public IEvent execute() {
+        if (StringUtils.isAnyEmpty(resourceId) || CollectionUtils.isEmpty(eventIdList)) {
+          return IEvent.this;
+        }
+        uidsToDelete = new java.util.ArrayList<>();
+        this.eventIdList.forEach(
+            eventId -> {
+              String eventPath =
+                  ICLOUD_CALDAV_HOST_PORT_STR
+                      + getBaseServiceURI()
+                      + this.resourceId
+                      + "/"
+                      + eventId
+                      + ".ics";
+              // there don't have multi delete method,so delete every eventId with a http
+              // request
+              HttpDeleteMethod deleteMethod = new HttpDeleteMethod(eventPath);
+              HttpResponse response = null;
+              try {
+                response = httpClient.execute(deleteMethod);
+              } catch (Exception e) {
+                if (debugMode) calendarLogger.error("Problem executing delete method", e);
+              }
+              if (response == null
+                  || response.getStatusLine().getStatusCode() != CalDAVStatus.SC_NO_CONTENT) {
+                if (debugMode) calendarLogger.error("Problem executing delete method");
+              }
+              if (debugMode) calendarLogger.info("Event with Id : {} deleted success", eventId);
+              uidsToDelete.add(eventId);
+            });
+        return IEvent.this;
+      }
+    }
+
+    // for event get & list (include mutilGet & calendarQuery) method
     private java.util.List<VEvent> eventItems;
 
-    private java.util.List<String> uidToDelete;
+    private java.util.List<String> uidsToDelete; // for event sync token method
 
     private String nextSyncToken;
+
+    private boolean success; // show the request flow complete or not
 
     public java.util.List<VEvent> getEventItems() {
       return eventItems;
@@ -387,12 +537,12 @@ public class ICloudCalendar {
       this.eventItems = eventItems;
     }
 
-    public java.util.List<String> getUidToDelete() {
-      return uidToDelete;
+    public java.util.List<String> getUidsToDelete() {
+      return uidsToDelete;
     }
 
-    public void setUidToDelete(java.util.List<String> uidToDelete) {
-      this.uidToDelete = uidToDelete;
+    public void setUidsToDelete(java.util.List<String> uidsToDelete) {
+      this.uidsToDelete = uidsToDelete;
     }
 
     public String getNextSyncToken() {

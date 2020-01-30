@@ -51,7 +51,7 @@ public class Caldavclient4jApplicationTests {
         calendar.iEvent().list("work").setSyncToken(null).setDebugMode(true).execute();
     System.out.println(iEvent.getEventItems());
     System.out.println(iEvent.getNextSyncToken());
-    System.out.println(iEvent.getUidToDelete());
+    System.out.println(iEvent.getUidsToDelete());
   }
 
   @Test

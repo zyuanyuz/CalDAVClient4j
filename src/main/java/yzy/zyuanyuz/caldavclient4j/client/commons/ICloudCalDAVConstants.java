@@ -12,7 +12,7 @@ import java.util.List;
 public final class ICloudCalDAVConstants {
   private ICloudCalDAVConstants() {}
 
-  // some http arg
+  // some http args
   public static final String ICLOUD_CALDAV_HOST_PORT_STR = "https://caldav.icloud.com:443/";
   public static final String ICLOUD_CALDAV_HOST_STR = "https://caldav.icloud.com/";
   public static final HttpHost ICLOUD_CALDAV_HOST = new HttpHost("caldav.icloud.com", 443, "https");
