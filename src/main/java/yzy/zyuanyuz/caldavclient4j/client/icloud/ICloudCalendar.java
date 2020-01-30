@@ -192,12 +192,13 @@ public class ICloudCalendar {
 
       private String resourceId;
 
+      /* default is CalendarQuery , if set sync token , will be changed to SyncCollection*/
+      private CalDAVReportRequest reportRequest;
+
       List(String resourceId) {
         this.resourceId = resourceId;
         this.reportRequest = new CalendarQuery();
       }
-
-      private CalDAVReportRequest reportRequest;
 
       public String getSyncToken() {
         return reportRequest instanceof SyncCollection
@@ -226,7 +227,7 @@ public class ICloudCalendar {
       }
 
       /**
-       * this time should set as UTC time
+       * this time should be set as UTC time end with 'Z'
        *
        * @param startDataTime
        * @return
@@ -243,13 +244,18 @@ public class ICloudCalendar {
         return endDateTime;
       }
 
+      /**
+       * this end time should be set as UTC time what end with 'Z'
+       * @param endDateTime
+       * @return
+       */
       public List setEndDateTime(DateTime endDateTime) {
         this.endDateTime = endDateTime;
         this.endDateTime.setUtc(true);
         return this;
       }
 
-      /** if set single event is false,singleEventStartTime and singleEventEndTime is required. */
+      /** only the time-range filter exist,the expand event will work with the recurrence events */
       private boolean isExpandEvent = false;
 
       public boolean isExpandEvent() {
@@ -319,11 +325,6 @@ public class ICloudCalendar {
         HttpCalDAVReportMethod reportMethod;
         HttpResponse response;
 
-        // add get etag
-        // DavPropertyNameSet properties = new DavPropertyNameSet();
-        // properties.add(DavPropertyName.GETETAG);
-        // ((SyncCollection)reportRequest).getProperties().addChildren(properties);
-
         try {
           reportMethod =
               methodFactory.createCalDAVReportMethod(
@@ -348,7 +349,7 @@ public class ICloudCalendar {
           IEvent.this.eventItems = new ArrayList<>();
           return;
         }
-        if (null != uidToDel && !uidToDel.isEmpty()) {
+        if (!CollectionUtils.isEmpty(uidToDel)) {
           IEvent.this.uidsToDelete = uidToDel;
         }
         if (null != nextSyncToken) {
@@ -383,6 +384,8 @@ public class ICloudCalendar {
             }
             IEvent.this.eventItems = new ArrayList<>();
           }
+        } else {
+          IEvent.this.eventItems = new ArrayList<>();
         }
       }
 
@@ -552,6 +555,15 @@ public class ICloudCalendar {
     public void setNextSyncToken(String nextSyncToken) {
       this.nextSyncToken = nextSyncToken;
     }
+
+    public boolean isSuccess(){
+      return this.success;
+    }
+
+    public void setSuccess(boolean success){
+      this.success = success;
+    }
+
   }
 
   public static Builder builder() {
@@ -628,9 +640,5 @@ public class ICloudCalendar {
       iCloudCalendar.setDebugMode(debugMode);
       return iCloudCalendar;
     }
-
-    //    private boolean validBuilder(){
-    //
-    //    }
   }
 }

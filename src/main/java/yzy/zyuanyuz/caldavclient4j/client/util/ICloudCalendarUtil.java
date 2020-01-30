@@ -25,6 +25,7 @@ import org.apache.jackrabbit.webdav.property.DavPropertyName;
 import org.apache.jackrabbit.webdav.property.DavPropertyNameSet;
 import org.w3c.dom.Document;
 import yzy.zyuanyuz.caldavclient4j.client.commons.ResourceEntry;
+import yzy.zyuanyuz.caldavclient4j.client.icloud.ICloudCalendarDataProperty;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -43,6 +44,9 @@ import static yzy.zyuanyuz.caldavclient4j.client.commons.ICloudCalDAVConstants.I
  * @since 2019/10/9 10:43
  */
 public final class ICloudCalendarUtil {
+  /*used to invoke the static block code*/
+  private static final ICloudCalendarDataProperty iCloudCalendarDataProperty =
+      new ICloudCalendarDataProperty();
 
   private ICloudCalendarUtil() {}
 
@@ -155,8 +159,6 @@ public final class ICloudCalendarUtil {
   }
 
   /**
-   * TODO need more test,understand the MultiStatusResponse
-   *
    * @param multiStatus
    * @return
    */
